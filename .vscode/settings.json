@@ -64,5 +64,8 @@
         "FocusFrameSpellBar",
         "TargetFrame",
         "FocusFrame"
+    ],
+    "Lua.diagnostics.disable": [
+        "assign-type-mismatch"
     ]
 }

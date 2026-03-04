@@ -155,6 +155,18 @@ local function EnhanceDialogDrag()
 
     local aceFrame = frame.frame
     if not aceFrame or aceFrame._dragEnhanced then return end
+    aceFrame:SetUserPlaced(true)
+
+    local function SaveDialogStatus()
+        local obj = aceFrame.obj
+        if not obj then return end
+        local status = obj.status or obj.localstatus
+        if not status then return end
+        status.width = aceFrame:GetWidth()
+        status.height = aceFrame:GetHeight()
+        status.top = aceFrame:GetTop()
+        status.left = aceFrame:GetLeft()
+    end
 
     -- 获取标题栏区域
     local titlebar = aceFrame.titlebar or aceFrame.titlebg
@@ -183,6 +195,7 @@ local function EnhanceDialogDrag()
     end)
     dragRegion:SetScript("OnDragStop", function()
         aceFrame:StopMovingOrSizing()
+        SaveDialogStatus()
     end)
     dragRegion:SetFrameLevel(aceFrame:GetFrameLevel() + 10)
 

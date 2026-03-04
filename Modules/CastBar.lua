@@ -402,7 +402,6 @@ local function StartOrRefreshFromUnit(f, unitHint)
     end
 
     ApplyAppearance(f)
-    ApplyCastBarColor(f)
     SetIcon(f, texture)
 
     local st = f._state or {}
@@ -413,6 +412,8 @@ local function StartOrRefreshFromUnit(f, unitHint)
     st.texture = texture
     st.startSec = startSec
     st.endSec = endSec
+
+    ApplyCastBarColor(f)
 
     local dur = endSec - startSec
     if dur <= 0 then dur = 1.5 end
