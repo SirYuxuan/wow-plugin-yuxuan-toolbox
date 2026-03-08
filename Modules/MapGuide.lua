@@ -289,6 +289,8 @@ local MapMarkers = {
 }
 
 local quickWaypointInput
+local quickWaypointHolder
+local quickWaypointExtraArea
 
 --------------------------------------------------------------------------------
 -- 工具函数
@@ -979,10 +981,24 @@ end
 
 local function InitializeQuickWaypointInput()
     if quickWaypointInput or not WorldMapFrame then return end
-    local anchorParent = WorldMapFrame.BorderFrame or WorldMapFrame
-    quickWaypointInput = CreateFrame("EditBox", nil, anchorParent, "InputBoxTemplate")
+    quickWaypointHolder = CreateFrame("Frame", nil, WorldMapFrame)
+    quickWaypointHolder:SetHeight(24)
+    quickWaypointHolder:SetPoint("BOTTOMLEFT", WorldMapFrame, "TOPLEFT", 0, 6)
+    quickWaypointHolder:SetPoint("BOTTOMRIGHT", WorldMapFrame, "TOPRIGHT", 0, 6)
+    quickWaypointHolder:SetFrameStrata("HIGH")
+    quickWaypointHolder:SetFrameLevel(3600)
+
+    local holderBg = quickWaypointHolder:CreateTexture(nil, "BACKGROUND")
+    holderBg:SetAllPoints()
+    holderBg:SetColorTexture(0, 0, 0, 0.5)
+
+    quickWaypointExtraArea = CreateFrame("Frame", nil, quickWaypointHolder)
+    quickWaypointExtraArea:SetPoint("TOPLEFT", quickWaypointHolder, "TOPLEFT", 188, 0)
+    quickWaypointExtraArea:SetPoint("BOTTOMRIGHT", quickWaypointHolder, "BOTTOMRIGHT", -8, 0)
+
+    quickWaypointInput = CreateFrame("EditBox", nil, quickWaypointHolder, "InputBoxTemplate")
     quickWaypointInput:SetSize(170, 18)
-    quickWaypointInput:SetPoint("TOPLEFT", anchorParent, "TOPLEFT", 8, -8)
+    quickWaypointInput:SetPoint("LEFT", quickWaypointHolder, "LEFT", 10, 0)
     quickWaypointInput:SetAutoFocus(false)
     quickWaypointInput:SetMaxLetters(32)
     quickWaypointInput:SetTextInsets(6, 6, 0, 0)
@@ -1107,6 +1123,7 @@ local mapMarkerHooked = false
 
 local function InitializeMapMarkers()
     if mapMarkerHooked then return end
+    if not WorldMapFrame then return false end
     mapMarkerHooked = true
 
     WorldMapFrame:HookScript("OnShow", function()
@@ -1131,6 +1148,35 @@ local function InitializeMapMarkers()
 
     MapMarkers:InitializeProfessions()
     InitializeQuickWaypointInput()
+    return true
+end
+
+local mapGuideInitWaiter
+local function EnsureMapGuideInitializedWhenWorldMapReady()
+    if mapMarkerHooked then return end
+    if InitializeMapMarkers() then
+        if mapGuideInitWaiter then
+            mapGuideInitWaiter:UnregisterAllEvents()
+            mapGuideInitWaiter:SetScript("OnEvent", nil)
+            mapGuideInitWaiter = nil
+        end
+        return
+    end
+
+    if mapGuideInitWaiter then return end
+    mapGuideInitWaiter = CreateFrame("Frame")
+    mapGuideInitWaiter:RegisterEvent("ADDON_LOADED")
+    mapGuideInitWaiter:RegisterEvent("PLAYER_ENTERING_WORLD")
+    mapGuideInitWaiter:SetScript("OnEvent", function(_, event, arg1)
+        if event == "ADDON_LOADED" and arg1 ~= "Blizzard_WorldMap" then
+            return
+        end
+        if InitializeMapMarkers() then
+            mapGuideInitWaiter:UnregisterAllEvents()
+            mapGuideInitWaiter:SetScript("OnEvent", nil)
+            mapGuideInitWaiter = nil
+        end
+    end)
 end
 
 -- ========================================================================================================================
@@ -1276,7 +1322,11 @@ end
 
 function Core:InitializeMapGuide()
     MigrateOldRoyMapGuideDB()
-    InitializeMapMarkers()
+    EnsureMapGuideInitializedWhenWorldMapReady()
+end
+
+function Core:GetMapGuideTopBarExtraArea()
+    return quickWaypointExtraArea
 end
 
 -- 注册 /yxpin 斜杠命令

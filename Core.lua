@@ -150,6 +150,7 @@ Core.DEFAULTS = {
             order = {},
             pos = { point = "CENTER", relativeTo = "UIParent", relativePoint = "CENTER", x = 0, y = -220 },
         },
+        -- 图标收纳模块已移除，不再保留 iconCollector 配置
         mapGuide = {
             enableMapMarkers = false,
             enableCoordDisplay = false,
@@ -396,6 +397,7 @@ function Core:ApplyAllSettings()
     if self.ToggleCoordDisplay then
         self:ToggleCoordDisplay()
     end
+    -- 图标收纳模块已移除，这里不再调用相关设置应用逻辑
     self:UpdateMinimapIcon()
 end
 
@@ -438,6 +440,7 @@ function Core:Initialize()
     self:CreateCurrencyFrame()
     self:CreateCastBars()
     self:InitializeMapGuide()
+    -- 图标收纳模块已移除，这里不再执行其初始化
     self:SetupMinimapButton()
     self:RegisterSlashCommands()
     ns.RegisterOptions(self.db)

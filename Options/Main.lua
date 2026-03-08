@@ -175,22 +175,7 @@ local function EnhanceDialogDrag()
         status.left = aceFrame:GetLeft()
     end
 
-    -- 获取标题栏区域
-    local titlebar = aceFrame.titlebar or aceFrame.titlebg
-    if not titlebar then
-        -- 尝试查找标题栏背景
-        for _, region in pairs({ aceFrame:GetRegions() }) do
-            if region:GetObjectType() == "Texture" and region:GetDrawLayer() == "ARTWORK" then
-                local _, _, _, _, y1 = region:GetPoint()
-                if y1 and y1 > -30 then
-                    titlebar = region
-                    break
-                end
-            end
-        end
-    end
-
-    -- 创建覆盖整个标题栏的拖动区域
+    -- 直接创建固定高度的顶部拖动区，避免每次打开时遍历区域造成额外开销
     local dragRegion = CreateFrame("Frame", nil, aceFrame)
     dragRegion:SetPoint("TOPLEFT", aceFrame, "TOPLEFT", 0, 0)
     dragRegion:SetPoint("TOPRIGHT", aceFrame, "TOPRIGHT", -26, 0) -- 避开关闭按钮
