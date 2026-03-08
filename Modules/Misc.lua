@@ -254,7 +254,7 @@ function Core:GetOrCreateMiscPopupMenu()
         return self.miscPopupMenu
     end
     local menu = CreateFrame("Frame", addonName .. "MiscPopupMenu", UIParent, "UIDropDownMenuTemplate")
-    UIDropDownMenu_Initialize(menu, function() end, "MENU")
+    menu.displayMode = "MENU"
     self.miscPopupMenu = menu
     return menu
 end
@@ -269,22 +269,23 @@ function Core:ShowMiscPopupMenu(anchor, menuType, title, entries, onSelect)
     self.miscPopupMenuType = menuType
     self.miscPopupAnchor = anchor
 
-    local menuList = {
-        {
-            text = title,
-            isTitle = true,
-            notCheckable = true,
-        },
-    }
+    UIDropDownMenu_Initialize(menu, function(_, level)
+        if level ~= 1 then return end
 
-    for _, entry in ipairs(entries) do
-        table.insert(menuList, {
-            text = entry.name or "",
-            icon = entry.icon,
-            checked = entry.active or false,
-            disabled = not not entry.disabled,
-            keepShownOnClick = false,
-            func = function()
+        local titleInfo = UIDropDownMenu_CreateInfo()
+        titleInfo.text = title
+        titleInfo.isTitle = true
+        titleInfo.notCheckable = true
+        UIDropDownMenu_AddButton(titleInfo, level)
+
+        for _, entry in ipairs(entries) do
+            local info = UIDropDownMenu_CreateInfo()
+            info.text = entry.name or ""
+            info.icon = entry.icon
+            info.checked = entry.active or false
+            info.disabled = not not entry.disabled
+            info.keepShownOnClick = false
+            info.func = function()
                 if entry.active or not onSelect then
                     Core:HideMiscPopupMenu()
                     return
@@ -298,11 +299,12 @@ function Core:ShowMiscPopupMenu(anchor, menuType, title, entries, onSelect)
                     onSelect(entry)
                 end
                 Core:HideMiscPopupMenu()
-            end,
-        })
-    end
+            end
+            UIDropDownMenu_AddButton(info, level)
+        end
+    end, "MENU")
 
-    EasyMenu(menuList, menu, anchor, 0, 0, "MENU")
+    ToggleDropDownMenu(1, nil, menu, anchor, 0, 0)
 end
 
 function Core:GetSpecializationEntries()
