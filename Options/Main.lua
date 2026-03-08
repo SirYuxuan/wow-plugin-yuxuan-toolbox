@@ -135,9 +135,10 @@ local function GetOptions()
     return {
         name = "|cFF33FF99雨轩工具箱|r  v" .. Core.VERSION,
         type = "group",
-        childGroups = "tab",
+        childGroups = "tree",
         args = {
             quickChat = ns.BuildQuickChatOptions(),
+            misc = ns.BuildMiscOptions(),
             attribute = ns.BuildAttributeOptions(),
             currency = ns.BuildCurrencyOptions(),
             castBar = ns.BuildCastBarOptions(),

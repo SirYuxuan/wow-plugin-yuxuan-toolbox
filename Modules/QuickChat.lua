@@ -308,7 +308,11 @@ function Core:BuildOrReuseButtonFrames()
             btn:SetScript("OnEnter", function(button)
                 button.textFS:SetAlpha(0.7)
                 if button.def and button.def.action == "world" then
-                    GameTooltip:SetOwner(button, "ANCHOR_TOP")
+                    if Core.SetTooltipAnchor then
+                        Core:SetTooltipAnchor(GameTooltip, button, "ANCHOR_TOP")
+                    else
+                        GameTooltip:SetOwner(button, "ANCHOR_TOP")
+                    end
                     GameTooltip:AddLine("世界频道", 1, 0.82, 0)
                     GameTooltip:AddLine(" ")
                     GameTooltip:AddLine("左键: 加入并切换到世界频道", 0.75, 1, 0.75)

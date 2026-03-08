@@ -11,6 +11,7 @@ embeds.xml
 Utils.lua
 Core.lua
 Modules\QuickChat.lua
+Modules\Misc.lua
 Modules\AttributeDisplay.lua
 Modules\CurrencyDisplay.lua
 Modules\CastBar.lua
@@ -18,6 +19,7 @@ Modules\MapGuideData.lua
 Modules\MapGuide.lua
 Options\Shared.lua
 Options\QuickChat.lua
+Options\Misc.lua
 Options\Attribute.lua
 Options\Currency.lua
 Options\CastBar.lua

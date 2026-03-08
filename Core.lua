@@ -5,9 +5,14 @@ local VERSION = "1.3.1"
 local AceDB = LibStub("AceDB-3.0")
 local LibDataBroker = LibStub("LibDataBroker-1.1")
 local LibDBIcon = LibStub("LibDBIcon-1.0")
+local LibSharedMedia = LibStub("LibSharedMedia-3.0")
 
 ns.addonName = addonName
 ns.VERSION = VERSION
+
+pcall(function()
+    LibSharedMedia:Register("statusbar", "Yuxuan", "Interface\\AddOns\\" .. addonName .. "\\Tga\\002")
+end)
 
 -- ─── Dragon Riding Spell IDs (for speed detection) ─
 ns.dragonRidingSpellIDs = {
@@ -57,6 +62,11 @@ local Core = {
     -- CastBar state
     castBars = {},
     castBarEventFrame = nil,
+
+    -- Misc state
+    miscFrame = nil,
+    miscDropdown = nil,
+    miscEventFrame = nil,
 }
 
 -- Backward compat: Core.util points to ns.util (populated by Utils.lua)
@@ -131,7 +141,7 @@ Core.DEFAULTS = {
             progressBarEnable  = false,
             progressBarHeight  = 6,
             progressBarWidth   = 180,
-            progressBarTexture = "Blizzard",
+            progressBarTexture = "Yuxuan",
             progressBarColor   = { r = 1, g = 1, b = 1 },
             maxIlvl            = 289,
         },
@@ -149,6 +159,23 @@ Core.DEFAULTS = {
             selected = {},
             order = {},
             pos = { point = "CENTER", relativeTo = "UIParent", relativePoint = "CENTER", x = 0, y = -220 },
+        },
+        misc = {
+            autoAnnounceQuest = false,
+            autoQuestTurnIn = false,
+            announceTemplate = "|cFF33FF99【雨轩工具箱】|r |cFFFFFF00{action}|r：{quest}",
+            tooltipFollowCursor = false,
+            infoBarEnabled = true,
+            infoBarLocked = true,
+            font = "Friz Quadrata TT",
+            fontSize = 13,
+            barSpacing = 18,
+            barPoint = {
+                point = "CENTER",
+                relativePoint = "CENTER",
+                x = 0,
+                y = -150,
+            },
         },
         -- 图标收纳模块已移除，不再保留 iconCollector 配置
         mapGuide = {
@@ -260,7 +287,7 @@ Core.DEFAULTS = {
             locked = true,
             hideBlizzardPlayer = true,
             hideBlizzardTarget = true,
-            texture = "Blizzard",
+            texture = "Yuxuan",
             font = "Friz Quadrata TT",
             fontSize = 12,
             outline = "OUTLINE",
@@ -382,6 +409,9 @@ end
 function Core:ApplyAllSettings()
     self:EnsureQuickChatData()
     self:UpdateQuickChatBar()
+    if self.ApplyMiscSettings then
+        self:ApplyMiscSettings()
+    end
     if self.ApplyAttributeSettings then
         self:ApplyAttributeSettings()
     end
@@ -430,12 +460,19 @@ end
 function Core:Initialize()
     MigrateOldDB()
     self.db = AceDB:New("YuXuanToolboxDB", self.DEFAULTS)
+    if self.db.profile.attribute and self.db.profile.attribute.progressBarTexture == "Blizzard" then
+        self.db.profile.attribute.progressBarTexture = "Yuxuan"
+    end
+    if self.db.profile.castBar and self.db.profile.castBar.texture == "Blizzard" then
+        self.db.profile.castBar.texture = "Yuxuan"
+    end
     self.db.RegisterCallback(self, "OnProfileChanged", "ApplyAllSettings")
     self.db.RegisterCallback(self, "OnProfileCopied", "ApplyAllSettings")
     self.db.RegisterCallback(self, "OnProfileReset", "ApplyAllSettings")
 
     self:EnsureQuickChatData()
     self:CreateQuickChatBar()
+    self:CreateMiscBar()
     self:CreateAttributeFrame()
     self:CreateCurrencyFrame()
     self:CreateCastBars()

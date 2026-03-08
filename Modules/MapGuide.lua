@@ -460,7 +460,11 @@ function MapMarkers:AddMarkerTooltip(frame, marker)
         end
         local c = cfg()
         if not c or c.mapMarkerTooltips ~= false then
-            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            if Core.SetTooltipAnchor then
+                Core:SetTooltipAnchor(GameTooltip, self, "ANCHOR_RIGHT")
+            else
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            end
             GameTooltip:SetText(titleText, 1, 0.82, 0)
             if detailText and detailText ~= "" then
                 GameTooltip:AddLine(detailText, 1, 1, 1, true)
