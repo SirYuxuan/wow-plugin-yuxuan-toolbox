@@ -176,6 +176,15 @@ Core.DEFAULTS = {
                 x = 0,
                 y = -150,
             },
+            quickLeaveEnabled = false,
+            quickLeaveLocked = true,
+            quickLeaveSize = 36,
+            quickLeavePoint = {
+                point = "CENTER",
+                relativePoint = "CENTER",
+                x = 260,
+                y = -120,
+            },
         },
         -- 图标收纳模块已移除，不再保留 iconCollector 配置
         mapGuide = {
