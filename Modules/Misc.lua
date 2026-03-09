@@ -44,6 +44,12 @@ local function MIcfg()
     if cfg.delveQuickLeaveIconSize == nil then
         cfg.delveQuickLeaveIconSize = DELVE_QUICK_LEAVE_DEFAULT_SIZE
     end
+    if not cfg.delveQuickLeaveIconPreset or cfg.delveQuickLeaveIconPreset == "" then
+        cfg.delveQuickLeaveIconPreset = DELVE_QUICK_LEAVE_ICON
+    end
+    if cfg.delveQuickLeaveCustomIcon == nil then
+        cfg.delveQuickLeaveCustomIcon = ""
+    end
     if not cfg.delveQuickLeavePoint then
         cfg.delveQuickLeavePoint = {
             point = "CENTER",
@@ -69,6 +75,29 @@ local function Defer(callback)
     else
         callback()
     end
+end
+
+local function GetConfiguredDelveQuickLeaveIcon()
+    local cfg = MIcfg()
+    local icon = cfg.delveQuickLeaveCustomIcon
+
+    if type(icon) == "string" then
+        icon = icon:match("^%s*(.-)%s*$")
+    end
+
+    if not icon or icon == "" then
+        icon = cfg.delveQuickLeaveIconPreset
+    end
+
+    if not icon or icon == "" then
+        icon = DELVE_QUICK_LEAVE_ICON
+    end
+
+    if type(icon) == "string" and icon:match("^%d+$") then
+        return tonumber(icon)
+    end
+
+    return icon
 end
 
 -- ═══════════════════════════════════════════════════
@@ -247,6 +276,8 @@ function Core:UpdateMiscEventRegistration()
     self.miscEventFrame:RegisterEvent("TRAIT_CONFIG_LIST_UPDATED")
     self.miscEventFrame:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
     self.miscEventFrame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+    self.miscEventFrame:RegisterEvent("WALK_IN_DATA_UPDATE")
+    self.miscEventFrame:RegisterEvent("ACTIVE_DELVE_DATA_UPDATE")
 end
 
 function Core:SaveMiscBarPosition()
@@ -269,15 +300,52 @@ function Core:SaveDelveQuickLeavePosition()
     pos.y = math.floor((y or 0) + 0.5)
 end
 
+function Core:EnsureDelveQuickLeaveButtonOnScreen()
+    local button = self.delveQuickLeaveButton
+    if not button then return end
+
+    local centerX, centerY = button:GetCenter()
+    if not centerX or not centerY then return end
+
+    local screenWidth = UIParent:GetWidth() or 0
+    local screenHeight = UIParent:GetHeight() or 0
+    if screenWidth <= 0 or screenHeight <= 0 then return end
+
+    if centerX < 0 or centerX > screenWidth or centerY < 0 or centerY > screenHeight then
+        local pos = MIcfg().delveQuickLeavePoint
+        pos.point = "CENTER"
+        pos.relativePoint = "CENTER"
+        pos.x = 180
+        pos.y = -20
+
+        button:ClearAllPoints()
+        button:SetPoint(pos.point, UIParent, pos.relativePoint, pos.x, pos.y)
+    end
+end
+
 function Core:IsInDelve()
+    if IsFunctionAvailable(C_PartyInfo, "IsDelveInProgress") and C_PartyInfo.IsDelveInProgress() then
+        return true
+    end
+
+    if IsFunctionAvailable(C_PartyInfo, "IsDelveComplete") and C_PartyInfo.IsDelveComplete() then
+        return true
+    end
+
+    if IsFunctionAvailable(C_PartyInfo, "IsPartyWalkIn") and C_PartyInfo.IsPartyWalkIn() then
+        return true
+    end
+
     local inInstance, instanceType = IsInInstance()
     if not inInstance then
         return false
     end
-    if instanceType == "delve" then
+
+    if instanceType == "scenario" then
         return true
     end
-    return IsFunctionAvailable(C_PartyInfo, "IsPartyWalkIn") and C_PartyInfo.IsPartyWalkIn()
+
+    return false
 end
 
 function Core:LeaveDelve()
@@ -800,7 +868,7 @@ function Core:UpdateDelveQuickLeaveButton()
         math.min(DELVE_QUICK_LEAVE_MAX_SIZE, tonumber(cfg.delveQuickLeaveIconSize) or DELVE_QUICK_LEAVE_DEFAULT_SIZE))
 
     button:SetSize(size, size)
-    button.icon:SetTexture(DELVE_QUICK_LEAVE_ICON)
+    button.icon:SetTexture(GetConfiguredDelveQuickLeaveIcon())
 
     if cfg.delveQuickLeaveLocked then
         button.bg:SetColorTexture(0, 0, 0, 0)
@@ -812,6 +880,7 @@ function Core:UpdateDelveQuickLeaveButton()
 
     button:SetMovable(not cfg.delveQuickLeaveLocked)
     button:EnableMouse(true)
+    self:EnsureDelveQuickLeaveButtonOnScreen()
 end
 
 function Core:UpdateDelveQuickLeaveVisibility()
@@ -982,6 +1051,8 @@ function Core:CreateMiscBar()
     self.miscEventFrame:SetScript("OnEvent", function(_, event, ...)
         if event == "PLAYER_ENTERING_WORLD"
             or event == "ZONE_CHANGED_NEW_AREA"
+            or event == "WALK_IN_DATA_UPDATE"
+            or event == "ACTIVE_DELVE_DATA_UPDATE"
             or event == "PLAYER_SPECIALIZATION_CHANGED"
             or event == "ACTIVE_TALENT_GROUP_CHANGED"
             or event == "TRAIT_CONFIG_UPDATED"
@@ -1023,7 +1094,8 @@ function Core:CreateDelveQuickLeaveButton()
     if self.delveQuickLeaveButton then return end
 
     local button = CreateFrame("Button", addonName .. "DelveQuickLeaveButton", UIParent)
-    button:SetFrameStrata("LOW")
+    button:SetFrameStrata("MEDIUM")
+    button:SetToplevel(true)
     button:SetClampedToScreen(true)
     button:SetMovable(true)
     button:EnableMouse(true)
