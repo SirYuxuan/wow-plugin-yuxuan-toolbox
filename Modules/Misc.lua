@@ -6,6 +6,11 @@ local INFOBAR_PADDING_X = 10
 local INFOBAR_PADDING_Y = 8
 local INFOBAR_SPACING = 18
 local ICON_SIZE_BAR = 16 -- 展示条上的图标大小
+local QUICK_LEAVE_MIN_SIZE = 24
+local QUICK_LEAVE_MAX_SIZE = 64
+local QUICK_LEAVE_DEFAULT_SIZE = 36
+local QUICK_LEAVE_TEXTURE = "Interface\\Buttons\\UI-GroupLoot-Pass-Up"
+local DELVE_WIDGET_TYPE = 29 -- Enum.UIWidgetVisualizationType.ScenarioHeaderDelves
 local MENU_WIDTH = 220
 local MENU_TITLE_HEIGHT = 24
 local MENU_ITEM_HEIGHT = 22
@@ -30,6 +35,23 @@ local function MIcfg()
     end
     if cfg.barSpacing == nil then
         cfg.barSpacing = INFOBAR_SPACING
+    end
+    if cfg.quickLeaveEnabled == nil then
+        cfg.quickLeaveEnabled = false
+    end
+    if cfg.quickLeaveLocked == nil then
+        cfg.quickLeaveLocked = true
+    end
+    if cfg.quickLeaveSize == nil then
+        cfg.quickLeaveSize = QUICK_LEAVE_DEFAULT_SIZE
+    end
+    if type(cfg.quickLeavePoint) ~= "table" then
+        cfg.quickLeavePoint = {
+            point = "CENTER",
+            relativePoint = "CENTER",
+            x = 260,
+            y = -120,
+        }
     end
     if not cfg.announceTemplate or cfg.announceTemplate == "" then
         cfg.announceTemplate = "|cFF33FF99【雨轩工具箱】|r |cFFFFFF00{action}|r：{quest}"
@@ -225,6 +247,14 @@ function Core:UpdateMiscEventRegistration()
     self.miscEventFrame:RegisterEvent("TRAIT_CONFIG_LIST_UPDATED")
     self.miscEventFrame:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
     self.miscEventFrame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+
+    if cfg.quickLeaveEnabled then
+        self.miscEventFrame:RegisterEvent("ZONE_CHANGED")
+        self.miscEventFrame:RegisterEvent("ZONE_CHANGED_INDOORS")
+        self.miscEventFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+        self.miscEventFrame:RegisterEvent("SCENARIO_UPDATE")
+        self.miscEventFrame:RegisterEvent("SCENARIO_CRITERIA_UPDATE")
+    end
 end
 
 function Core:SaveMiscBarPosition()
@@ -235,6 +265,108 @@ function Core:SaveMiscBarPosition()
     pos.relativePoint = relativePoint or "CENTER"
     pos.x = math.floor((x or 0) + 0.5)
     pos.y = math.floor((y or 0) + 0.5)
+end
+
+local function ClampQuickLeaveSize(size)
+    size = tonumber(size) or QUICK_LEAVE_DEFAULT_SIZE
+    return math.max(QUICK_LEAVE_MIN_SIZE, math.min(QUICK_LEAVE_MAX_SIZE, size))
+end
+
+function Core:SaveQuickLeavePosition()
+    if not self.quickLeaveFrame then return end
+    local point, _, relativePoint, x, y = self.quickLeaveFrame:GetPoint(1)
+    local pos = MIcfg().quickLeavePoint
+    pos.point = point or "CENTER"
+    pos.relativePoint = relativePoint or "CENTER"
+    pos.x = math.floor((x or 0) + 0.5)
+    pos.y = math.floor((y or 0) + 0.5)
+end
+
+function Core:IsInDelve()
+    local inInstance = IsInInstance()
+    if not inInstance then
+        return false
+    end
+
+    if type(C_DelvesUI) == "table" then
+        for _, fnName in ipairs({ "IsDelveActive", "IsActiveDelve", "IsActive" }) do
+            local fn = C_DelvesUI[fnName]
+            if type(fn) == "function" then
+                local ok, result = pcall(fn)
+                if ok and result then
+                    return true
+                end
+            end
+        end
+    end
+
+    local scenarioType = C_Scenario and C_Scenario.GetScenarioType and C_Scenario.GetScenarioType()
+    if scenarioType and scenarioType ~= 0 and LE_SCENARIO_TYPE_DELVE and scenarioType == LE_SCENARIO_TYPE_DELVE then
+        return true
+    end
+
+    if C_Scenario and C_Scenario.GetStepInfo
+        and C_UIWidgetManager and C_UIWidgetManager.GetAllWidgetsBySetID then
+        local widgetSetID = select(12, C_Scenario.GetStepInfo())
+        if widgetSetID and widgetSetID > 0 then
+            local widgets = C_UIWidgetManager.GetAllWidgetsBySetID(widgetSetID)
+            if widgets then
+                for _, widgetInfo in ipairs(widgets) do
+                    if widgetInfo and widgetInfo.widgetType == DELVE_WIDGET_TYPE then
+                        return true
+                    end
+                end
+            end
+        end
+    end
+
+    return false
+end
+
+function Core:LeaveCurrentDelve()
+    if not self:IsInDelve() then return end
+
+    if C_PartyInfo and C_PartyInfo.LeaveParty then
+        C_PartyInfo.LeaveParty()
+    elseif LeaveParty then
+        LeaveParty()
+    end
+end
+
+function Core:UpdateQuickLeaveLayout()
+    if not self.quickLeaveFrame then return end
+
+    local cfg = MIcfg()
+    local size = ClampQuickLeaveSize(cfg.quickLeaveSize)
+    cfg.quickLeaveSize = size
+
+    self.quickLeaveFrame:SetMovable(not cfg.quickLeaveLocked)
+    self.quickLeaveFrame:SetSize(size + 8, size + 8)
+    self.quickLeaveFrame.icon:SetSize(size, size)
+
+    if cfg.quickLeaveLocked then
+        self.quickLeaveFrame.bg:SetColorTexture(0, 0, 0, 0)
+    else
+        self.quickLeaveFrame.bg:SetColorTexture(0, 0.6, 1, 0.12)
+    end
+
+    self:UpdateQuickLeaveVisibility()
+end
+
+function Core:UpdateQuickLeaveVisibility()
+    if not self.quickLeaveFrame then return end
+
+    local cfg = MIcfg()
+    local inDelve = self:IsInDelve()
+    local shouldShow = cfg.quickLeaveEnabled and (inDelve or not cfg.quickLeaveLocked)
+
+    if shouldShow then
+        self.quickLeaveFrame.icon:SetDesaturated(not inDelve)
+        self.quickLeaveFrame:SetAlpha(inDelve and 1 or 0.7)
+        self.quickLeaveFrame:Show()
+    else
+        self.quickLeaveFrame:Hide()
+    end
 end
 
 -- ═══════════════════════════════════════════════════
@@ -732,15 +864,19 @@ function Core:UpdateMiscBarVisibility()
 end
 
 function Core:ApplyMiscSettings()
-    if not self.miscFrame then return end
     local cfg = MIcfg()
 
-    self.miscFrame:SetMovable(not cfg.infoBarLocked)
-    self.miscFrame:EnableMouse(true)
-    self:HideMiscPopupMenu()
-    self:UpdateMiscBarLayout()
-    self:UpdateMiscBarVisibility()
+    if self.miscFrame then
+        self.miscFrame:SetMovable(not cfg.infoBarLocked)
+        self.miscFrame:EnableMouse(true)
+        self:HideMiscPopupMenu()
+        self:UpdateMiscBarLayout()
+        self:UpdateMiscBarVisibility()
+    end
+
     self:UpdateMiscEventRegistration()
+    self:UpdateQuickLeaveLayout()
+    self:UpdateQuickLeaveVisibility()
     self:ApplyGlobalTooltipHook()
 end
 
@@ -877,6 +1013,67 @@ function Core:CreateMiscBar()
         end
     end)
 
+    self.quickLeaveFrame = CreateFrame("Button", addonName .. "QuickLeaveButton", UIParent)
+    self.quickLeaveFrame:SetFrameStrata("LOW")
+    self.quickLeaveFrame:SetClampedToScreen(true)
+    self.quickLeaveFrame:SetMovable(true)
+    self.quickLeaveFrame:EnableMouse(true)
+    self.quickLeaveFrame:RegisterForClicks("LeftButtonUp")
+    self.quickLeaveFrame:RegisterForDrag("LeftButton")
+
+    self.quickLeaveFrame.bg = self.quickLeaveFrame:CreateTexture(nil, "BACKGROUND")
+    self.quickLeaveFrame.bg:SetAllPoints(self.quickLeaveFrame)
+
+    self.quickLeaveFrame.icon = self.quickLeaveFrame:CreateTexture(nil, "ARTWORK")
+    self.quickLeaveFrame.icon:SetPoint("CENTER")
+    self.quickLeaveFrame.icon:SetTexture(QUICK_LEAVE_TEXTURE)
+
+    self.quickLeaveFrame.highlight = self.quickLeaveFrame:CreateTexture(nil, "HIGHLIGHT")
+    self.quickLeaveFrame.highlight:SetAllPoints(self.quickLeaveFrame)
+    self.quickLeaveFrame.highlight:SetTexture("Interface\\Buttons\\ButtonHilight-Square")
+    self.quickLeaveFrame.highlight:SetBlendMode("ADD")
+
+    do
+        local pos = MIcfg().quickLeavePoint
+        self.quickLeaveFrame:SetPoint(
+            pos.point or "CENTER",
+            UIParent,
+            pos.relativePoint or "CENTER",
+            pos.x or 260,
+            pos.y or -120
+        )
+    end
+
+    self.quickLeaveFrame:SetScript("OnDragStart", function(self)
+        if MIcfg().quickLeaveLocked then return end
+        self:StartMoving()
+    end)
+
+    self.quickLeaveFrame:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        Core:SaveQuickLeavePosition()
+    end)
+
+    self.quickLeaveFrame:SetScript("OnEnter", function(self)
+        Core:SetTooltipAnchor(GameTooltip, self, "ANCHOR_LEFT")
+        GameTooltip:AddLine("快速离开地下堡", 1, 0.82, 0)
+        GameTooltip:AddLine(" ")
+        if Core:IsInDelve() then
+            GameTooltip:AddLine("左键：直接离开当前地下堡", 0.75, 1, 0.75)
+        else
+            GameTooltip:AddLine("当前不在地下堡中", 0.7, 0.7, 0.7)
+        end
+        if not MIcfg().quickLeaveLocked then
+            GameTooltip:AddLine("已解锁，可按住左键拖动图标", 0.75, 1, 0.75)
+        end
+        GameTooltip:Show()
+    end)
+    self.quickLeaveFrame:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    self.quickLeaveFrame:SetScript("OnClick", function()
+        GameTooltip:Hide()
+        Core:LeaveCurrentDelve()
+    end)
+
     -- ── 事件帧 ──
     self.miscEventFrame = CreateFrame("Frame")
     self.miscEventFrame:SetScript("OnEvent", function(_, event, ...)
@@ -888,6 +1085,16 @@ function Core:CreateMiscBar()
             or event == "UPDATE_INVENTORY_DURABILITY"
             or event == "PLAYER_EQUIPMENT_CHANGED" then
             Core:UpdateMiscBarLayout()
+            Core:UpdateQuickLeaveVisibility()
+            return
+        end
+
+        if event == "ZONE_CHANGED"
+            or event == "ZONE_CHANGED_INDOORS"
+            or event == "ZONE_CHANGED_NEW_AREA"
+            or event == "SCENARIO_UPDATE"
+            or event == "SCENARIO_CRITERIA_UPDATE" then
+            Core:UpdateQuickLeaveVisibility()
             return
         end
 

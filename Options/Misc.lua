@@ -136,6 +136,57 @@ function ns.BuildMiscOptions()
                     },
                 },
             },
+            quickLeave = {
+                type = "group",
+                name = "快速离开地下堡",
+                order = 25,
+                inline = true,
+                args = {
+                    quickLeaveEnabled = {
+                        type = "toggle",
+                        name = "启用快速离开",
+                        desc = "进入地下堡后显示快速离开图标，点击后可直接离开当前地下堡",
+                        order = 1,
+                        get = function() return MI().quickLeaveEnabled end,
+                        set = function(_, val)
+                            MI().quickLeaveEnabled = val
+                            Core:ApplyMiscSettings()
+                        end,
+                    },
+                    quickLeaveLocked = {
+                        type = "toggle",
+                        name = function() return MI().quickLeaveLocked and "解锁框架" or "锁定图标" end,
+                        order = 2,
+                        get = function() return MI().quickLeaveLocked end,
+                        set = function(_, val)
+                            MI().quickLeaveLocked = val
+                            Core:ApplyMiscSettings()
+                        end,
+                    },
+                    quickLeaveSize = {
+                        type = "range",
+                        name = "图标大小",
+                        order = 3,
+                        min = 24,
+                        max = 64,
+                        step = 1,
+                        get = function()
+                            local value = MI().quickLeaveSize or 36
+                            return math.max(24, math.min(64, value))
+                        end,
+                        set = function(_, val)
+                            MI().quickLeaveSize = math.max(24, math.min(64, val))
+                            Core:UpdateQuickLeaveLayout()
+                        end,
+                    },
+                    quickLeaveDesc = {
+                        type = "description",
+                        name = "图标默认仅在地下堡内显示；解锁后会临时显示在屏幕上，方便拖动调整位置。",
+                        order = 4,
+                        width = "full",
+                    },
+                },
+            },
             tooltip = {
                 type = "group",
                 name = "鼠标提示",
