@@ -50,7 +50,7 @@ function ns.BuildSystemAdjustOptions()
             tooltipGroup = {
                 type = "group",
                 name = "鼠标提示",
-                order = 2,
+                order = 20,
                 inline = true,
                 args = {
                     disableAllTooltips = {
@@ -185,6 +185,49 @@ function ns.BuildSystemAdjustOptions()
                         type = "description",
                         name = "NPC 存活时间参考 GUID 生成时间计算，可额外显示当前时间、位面层、NPC ID，也可改为仅按住 Ctrl/Alt/Shift 时显示。",
                         order = 11,
+                        width = "full",
+                    },
+                },
+            },
+            targetMarkerGroup = {
+                type = "group",
+                name = "目标标记",
+                order = 30,
+                inline = true,
+                args = {
+                    targetArrowEnabled = {
+                        type = "toggle",
+                        name = "启用目标箭头",
+                        desc = "在当前选中目标头顶显示一个红色上下浮动箭头。",
+                        order = 1,
+                        get = function()
+                            return SA().targetArrowEnabled
+                        end,
+                        set = function(_, val)
+                            SA().targetArrowEnabled = val
+                            Core:ApplySystemAdjustSettings()
+                        end,
+                    },
+                    targetArrowSize = {
+                        type = "range",
+                        name = "箭头大小",
+                        order = 2,
+                        min = 12,
+                        max = 64,
+                        step = 1,
+                        disabled = function() return not SA().targetArrowEnabled end,
+                        get = function()
+                            return tonumber(SA().targetArrowSize) or 28
+                        end,
+                        set = function(_, val)
+                            SA().targetArrowSize = math.max(12, math.min(64, val or 28))
+                            Core:ApplySystemAdjustSettings()
+                        end,
+                    },
+                    targetArrowDesc = {
+                        type = "description",
+                        name = "箭头会尽量锚定在当前目标姓名板上方，并持续上下浮动。",
+                        order = 3,
                         width = "full",
                     },
                 },

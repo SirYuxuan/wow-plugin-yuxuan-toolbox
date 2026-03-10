@@ -513,6 +513,10 @@ local tooltipNPCAliveHooked = false
 local tooltipHealthBarHooked = false
 local npcPhaseAlertReady = false
 local NPC_TIME_FORMAT = "%H:%M, %d.%m"
+local TARGET_ARROW_SYMBOL = "▼"
+local TARGET_ARROW_BASE_OFFSET = 24
+local TARGET_ARROW_BOB_RANGE = 10
+local TARGET_ARROW_BOB_SPEED = 3.2
 local TOOLTIP_FRAME_NAMES = {
     "GameTooltip",
     "ItemRefTooltip",
@@ -703,6 +707,80 @@ function Core:ApplyTooltipHealthBarVisibility()
     end
 end
 
+function Core:CreateTargetArrowFrame()
+    if self.targetArrowFrame then return end
+
+    local frame = CreateFrame("Frame", addonName .. "TargetArrowFrame", UIParent)
+    frame:SetSize(40, 40)
+    frame:SetFrameStrata("HIGH")
+    frame:SetIgnoreParentScale(true)
+    frame:Hide()
+
+    frame.text = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
+    frame.text:SetPoint("CENTER")
+    frame.text:SetText(TARGET_ARROW_SYMBOL)
+    frame.text:SetTextColor(1, 0.12, 0.12, 0.95)
+    frame.text:SetShadowOffset(1, -1)
+    frame.text:SetShadowColor(0, 0, 0, 1)
+
+    frame:SetScript("OnUpdate", function(self, elapsed)
+        self._animTime = (self._animTime or 0) + elapsed
+        if not self.anchorFrame or not self.anchorFrame:IsShown() then
+            self:Hide()
+            return
+        end
+
+        local bob = math.sin((self._animTime or 0) * TARGET_ARROW_BOB_SPEED) * TARGET_ARROW_BOB_RANGE
+        self:ClearAllPoints()
+        self:SetPoint("BOTTOM", self.anchorFrame, "TOP", 0, TARGET_ARROW_BASE_OFFSET + bob)
+    end)
+
+    self.targetArrowFrame = frame
+end
+
+function Core:UpdateTargetArrowVisibility()
+    self:CreateTargetArrowFrame()
+
+    local cfg = SAcfg()
+    local frame = self.targetArrowFrame
+    if not cfg.targetArrowEnabled then
+        frame.anchorFrame = nil
+        frame:Hide()
+        return
+    end
+
+    local targetExists = UnitExists and UnitExists("target")
+    if not targetExists then
+        frame.anchorFrame = nil
+        frame:Hide()
+        return
+    end
+
+    local nameplate = C_NamePlate and C_NamePlate.GetNamePlateForUnit and
+    C_NamePlate.GetNamePlateForUnit("target", false)
+    local anchor = nameplate and (nameplate.UnitFrame or nameplate)
+    if not anchor or not anchor:IsShown() then
+        frame.anchorFrame = nil
+        frame:Hide()
+        return
+    end
+
+    frame.anchorFrame = anchor
+    frame:Show()
+end
+
+function Core:ApplyTargetArrowSettings()
+    local cfg = SAcfg()
+    self:CreateTargetArrowFrame()
+
+    local size = math.max(12, math.min(64, tonumber(cfg.targetArrowSize) or 28))
+    local frame = self.targetArrowFrame
+    frame:SetSize(size + 12, size + 12)
+    frame.text:SetFont(STANDARD_TEXT_FONT, size, "OUTLINE")
+    frame.text:SetText(TARGET_ARROW_SYMBOL)
+    self:UpdateTargetArrowVisibility()
+end
+
 function Core:ApplySystemAdjustSettings()
     local cfg = SAcfg()
 
@@ -716,6 +794,12 @@ function Core:ApplySystemAdjustSettings()
     end
     if cfg.showTooltipHealthBar == nil then
         cfg.showTooltipHealthBar = false
+    end
+    if cfg.targetArrowEnabled == nil then
+        cfg.targetArrowEnabled = false
+    end
+    if cfg.targetArrowSize == nil then
+        cfg.targetArrowSize = 28
     end
     if cfg.showNPCAliveTime == nil then
         cfg.showNPCAliveTime = false
@@ -742,6 +826,7 @@ function Core:ApplySystemAdjustSettings()
 
     self:ApplyTooltipBackgroundOpacity()
     self:ApplyTooltipHealthBarVisibility()
+    self:ApplyTargetArrowSettings()
     self:ApplyNPCTooltipHook()
     self:UpdateMiscEventRegistration()
 end
@@ -1004,6 +1089,12 @@ function Core:UpdateMiscEventRegistration()
     if cfg.levelingTipEnabled then
         self.miscEventFrame:RegisterEvent("PLAYER_XP_UPDATE")
         self.miscEventFrame:RegisterEvent("PLAYER_LEVEL_UP")
+    end
+
+    if systemCfg and systemCfg.targetArrowEnabled then
+        self.miscEventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
+        self.miscEventFrame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+        self.miscEventFrame:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
     end
 
     if systemCfg and systemCfg.npcTimeShowPhaseAlert then
@@ -2553,6 +2644,11 @@ function Core:CreateMiscBar()
             if cfg and cfg.npcTimeShowPhaseAlert and npcPhaseAlertReady and type(message) == "string" and string.find(string.lower(message), "new connection", 1, true) then
                 PrintPhaseAlert()
             end
+            return
+        end
+
+        if event == "PLAYER_TARGET_CHANGED" or event == "NAME_PLATE_UNIT_ADDED" or event == "NAME_PLATE_UNIT_REMOVED" then
+            Core:UpdateTargetArrowVisibility()
             return
         end
 
