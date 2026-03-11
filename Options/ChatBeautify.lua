@@ -126,11 +126,15 @@ function ns.BuildChatBeautifyOptions()
                     Core:ApplyChatBeautifySettings()
                 end,
             },
-            tips = {
-                type = "description",
-                name = "为聊天窗口添加简洁暗色背景、简化标签样式，并可隐藏菜单按钮、侧边按钮和快速加入按钮。",
-                order = 20,
-                width = "full",
+            abbreviateChannels = {
+                type = "toggle",
+                name = "频道名称缩写",
+                order = 10,
+                disabled = function() return not CB().enabled end,
+                get = function() return CB().abbreviateChannels end,
+                set = function(_, val)
+                    CB().abbreviateChannels = val
+                end,
             },
         },
     }

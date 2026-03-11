@@ -11,12 +11,6 @@ function ns.BuildSystemAdjustOptions()
         name = "系统调节",
         order = 10,
         args = {
-            overview = {
-                type = "description",
-                name = "用于统一调整系统显示效果与鼠标提示行为。",
-                order = 1,
-                width = "full",
-            },
             combatTextGroup = {
                 type = "group",
                 name = "战斗文字",
@@ -26,7 +20,6 @@ function ns.BuildSystemAdjustOptions()
                     combatDamageTextScale = {
                         type = "range",
                         name = "伤害字体大小",
-                        desc = "对应系统变量 floatingCombatTextCombatDamageDirectionalScale_V2。",
                         order = 1,
                         min = 1,
                         max = 20,
@@ -39,12 +32,6 @@ function ns.BuildSystemAdjustOptions()
                             Core:ApplySystemAdjustSettings()
                         end,
                     },
-                    combatTextDesc = {
-                        type = "description",
-                        name = "调整后会立即同步到游戏系统变量。",
-                        order = 2,
-                        width = "full",
-                    },
                 },
             },
             tooltipGroup = {
@@ -56,7 +43,6 @@ function ns.BuildSystemAdjustOptions()
                     disableAllTooltips = {
                         type = "toggle",
                         name = "禁止鼠标提示",
-                        desc = "勾选后尽量隐藏所有常见提示框。",
                         order = 1,
                         width = 1.2,
                         get = function() return MI().disableAllTooltips end,
@@ -80,7 +66,6 @@ function ns.BuildSystemAdjustOptions()
                     opaqueTooltipBackground = {
                         type = "toggle",
                         name = "取消背景透明",
-                        desc = "让常见鼠标提示框背景改为不透明显示。",
                         order = 3,
                         width = 1.2,
                         disabled = function() return MI().disableAllTooltips end,
@@ -95,7 +80,6 @@ function ns.BuildSystemAdjustOptions()
                     showTooltipHealthBar = {
                         type = "toggle",
                         name = "显示提示框血条",
-                        desc = "控制鼠标提示框底部单位血条是否显示。",
                         order = 4,
                         width = 1.2,
                         disabled = function() return MI().disableAllTooltips end,
@@ -110,7 +94,6 @@ function ns.BuildSystemAdjustOptions()
                     showNPCAliveTime = {
                         type = "toggle",
                         name = "显示NPC存活时间",
-                        desc = "在鼠标提示框中追加 NPC 存活时间。",
                         order = 5,
                         width = 1.2,
                         disabled = function() return MI().disableAllTooltips end,
@@ -181,12 +164,6 @@ function ns.BuildSystemAdjustOptions()
                             Core:ApplySystemAdjustSettings()
                         end,
                     },
-                    tooltipDesc = {
-                        type = "description",
-                        name = "NPC 存活时间参考 GUID 生成时间计算，可额外显示当前时间、位面层、NPC ID，也可改为仅按住 Ctrl/Alt/Shift 时显示。",
-                        order = 11,
-                        width = "full",
-                    },
                 },
             },
             targetMarkerGroup = {
@@ -198,7 +175,6 @@ function ns.BuildSystemAdjustOptions()
                     targetArrowEnabled = {
                         type = "toggle",
                         name = "启用目标箭头",
-                        desc = "在当前选中目标头顶显示一个红色上下浮动箭头。",
                         order = 1,
                         get = function()
                             return SA().targetArrowEnabled
@@ -304,38 +280,6 @@ function ns.BuildSystemAdjustOptions()
                             SA().targetArrowColor = { r = r, g = g, b = b, a = a }
                             Core:ApplySystemAdjustSettings()
                         end,
-                    },
-                    targetArrowDesc = {
-                        type = "description",
-                        name = "箭头会尽量锚定在当前目标姓名板上方，并持续上下浮动。不勾选任何类型时对所有目标显示。",
-                        order = 9,
-                        width = "full",
-                    },
-                },
-            },
-            dungeonFinderGroup = {
-                type = "group",
-                name = "地下城查找器",
-                order = 40,
-                inline = true,
-                args = {
-                    hideDungeonFinderButton = {
-                        type = "toggle",
-                        name = "隐藏地下城查找器按钮",
-                        desc = "隐藏系统微按钮栏中的地下城查找器按钮。",
-                        order = 1,
-                        width = 1.2,
-                        get = function() return SA().hideDungeonFinderButton end,
-                        set = function(_, val)
-                            SA().hideDungeonFinderButton = val
-                            Core:ApplySystemAdjustSettings()
-                        end,
-                    },
-                    dungeonFinderDesc = {
-                        type = "description",
-                        name = "已完全移除其它页面元素隐藏功能，只保留地下城查找器按钮隐藏。",
-                        order = 2,
-                        width = "full",
                     },
                 },
             },

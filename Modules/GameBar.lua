@@ -242,6 +242,100 @@ local function ShowAddOnMemoryTooltip(owner, title)
     GameTooltip:Show()
 end
 
+local ELVUI_VIRTUAL_DT_EVENT = {
+    Time = "UPDATE_INSTANCE_INFO",
+}
+
+local ELVUI_VIRTUAL_DT = {
+    Time = {
+        name = "Time",
+        text = {
+            SetFormattedText = function() end,
+        },
+    },
+}
+
+local function GetElvUITimeTooltipModules()
+    local elvUI = rawget(_G, "ElvUI")
+    if type(elvUI) ~= "table" then
+        return nil
+    end
+
+    local unpackFunc = rawget(_G, "unpack") or table.unpack
+    if type(unpackFunc) ~= "function" then
+        return nil
+    end
+
+    local ok, E = pcall(unpackFunc, elvUI)
+    if not ok or type(E) ~= "table" or type(E.GetModule) ~= "function" then
+        return nil
+    end
+
+    local okDT, DT = pcall(E.GetModule, E, "DataTexts")
+    if not okDT or type(DT) ~= "table" or type(DT.RegisteredDataTexts) ~= "table" or not DT.tooltip then
+        return nil
+    end
+
+    local timeDT = DT.RegisteredDataTexts.Time
+    local systemDT = DT.RegisteredDataTexts.System
+    if type(timeDT) ~= "table" or type(timeDT.onEnter) ~= "function" then
+        return nil
+    end
+
+    return DT, timeDT, systemDT
+end
+
+local function ShowElvUITimeTooltip(owner)
+    local DT, timeDT, systemDT = GetElvUITimeTooltipModules()
+    if not DT then
+        return false
+    end
+
+    local anchorOwner = (owner and owner.text) or owner
+    if RequestRaidInfo then
+        RequestRaidInfo()
+    end
+
+    DT.tooltip:SetOwner(anchorOwner, "ANCHOR_BOTTOM", 0, -10)
+
+    if IsModifierKeyDown and IsModifierKeyDown() and type(systemDT) == "table" and type(systemDT.eventFunc) == "function" and type(systemDT.onEnter) == "function" then
+        systemDT.eventFunc()
+        systemDT.onEnter()
+        return true
+    end
+
+    if type(timeDT.eventFunc) == "function" then
+        timeDT.eventFunc(ELVUI_VIRTUAL_DT.Time, ELVUI_VIRTUAL_DT_EVENT.Time)
+    end
+    timeDT.onEnter()
+    if type(timeDT.onLeave) == "function" then
+        timeDT.onLeave()
+    end
+
+    if type(systemDT) == "table" and type(systemDT.onUpdate) == "function" then
+        systemDT.onUpdate(owner, 10)
+    end
+
+    DT.tooltip:AddLine("\n")
+    DT.tooltip:AddDoubleLine(L_BTN .. " 左键", "日历", 1, 1, 1, 1, 1, 1)
+    DT.tooltip:AddDoubleLine(R_BTN .. " 右键", "时间管理器", 1, 1, 1, 1, 1, 1)
+    DT.tooltip:AddDoubleLine(M_BTN .. " 中键", "重载界面", 1, 1, 1, 1, 1, 1)
+    DT.tooltip:AddDoubleLine("Shift + 任意键", "整理内存", 1, 1, 1, 1, 1, 1)
+    DT.tooltip:AddDoubleLine("Ctrl + Shift + 任意键", "切换脚本分析", 1, 1, 1, 1, 1, 1)
+    DT.tooltip:Show()
+    return true
+end
+
+local function HideElvUITimeTooltip()
+    local DT, _, systemDT = GetElvUITimeTooltipModules()
+    if type(systemDT) == "table" and type(systemDT.onLeave) == "function" then
+        systemDT.onLeave()
+    end
+    if DT and DT.tooltip then
+        DT.tooltip:Hide()
+    end
+end
+
 local function GetBattleNetOnlineCounts()
     local total = 0
     local wowOnly = 0
@@ -1176,9 +1270,72 @@ local rightButtons       = {}
 local timeTicker
 local infoTicker
 local hearthstoneButtons = {}
+local gameBarEventFrame
+local playerHouseList
 local UpdateHearthstoneButtonMacros
 
 local function GetDef(id) return BUTTON_DEFS[id] or BUTTON_DEFS["NONE"] end
+
+local function UpdateHomeButtonAttributes(button)
+    if not button or button._defID ~= "HOME" or InCombatLockdown and InCombatLockdown() then
+        return
+    end
+
+    button:SetAttribute("house-neighborhood-guid", nil)
+    button:SetAttribute("house-guid", nil)
+    button:SetAttribute("house-plot-id", nil)
+
+    local house = type(playerHouseList) == "table" and playerHouseList[1] or nil
+    if house and house.neighborhoodGUID and house.houseGUID and house.plotID then
+        button:SetAttribute("house-neighborhood-guid", house.neighborhoodGUID)
+        button:SetAttribute("house-guid", house.houseGUID)
+        button:SetAttribute("house-plot-id", house.plotID)
+        button:SetAttribute("type1", "teleporthome")
+    else
+        button:SetAttribute("type1", nil)
+    end
+end
+
+local function RefreshHomeButtonAttributes()
+    for _, button in ipairs(leftButtons) do
+        UpdateHomeButtonAttributes(button)
+    end
+    for _, button in ipairs(rightButtons) do
+        UpdateHomeButtonAttributes(button)
+    end
+end
+
+local function EnsureGameBarEvents()
+    if gameBarEventFrame then
+        return
+    end
+
+    gameBarEventFrame = CreateFrame("Frame")
+    gameBarEventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+    gameBarEventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+    gameBarEventFrame:RegisterEvent("PLAYER_HOUSE_LIST_UPDATED")
+    gameBarEventFrame:SetScript("OnEvent", function(_, event, ...)
+        if event == "PLAYER_HOUSE_LIST_UPDATED" then
+            playerHouseList = ...
+            RefreshHomeButtonAttributes()
+            return
+        end
+
+        if event == "PLAYER_REGEN_ENABLED" then
+            RefreshHomeButtonAttributes()
+            return
+        end
+
+        if event == "PLAYER_ENTERING_WORLD" then
+            if C_Housing and C_Housing.GetPlayerOwnedHouses then
+                C_Housing.GetPlayerOwnedHouses()
+            end
+            C_Timer.After(1, function()
+                RefreshHomeButtonAttributes()
+            end)
+        end
+    end)
+end
 
 local function IsTwentyFourHourTime()
     return true
@@ -1239,6 +1396,147 @@ local function FormatResetTime(seconds)
         return string.format("%d小时 %d分钟", hours, minutes)
     end
     return string.format("%d分钟", minutes)
+end
+
+-- ── 副本进度信息 ──────────────────────────────────
+local DIFFICULTY_TAG = { "N", "H", "M", "LFR" }
+
+local function GetDifficultyTag(difficultyID)
+    if not GetDifficultyInfo then return "N" end
+    local _, _, isHeroic, _, displayHeroic, displayMythic = GetDifficultyInfo(difficultyID)
+    if displayMythic then return DIFFICULTY_TAG[3] end
+    if isHeroic or displayHeroic then return DIFFICULTY_TAG[2] end
+    -- LFR difficulties: 7, 17
+    if difficultyID == 7 or difficultyID == 17 then return DIFFICULTY_TAG[4] end
+    return DIFFICULTY_TAG[1]
+end
+
+-- 副本图标缓存（名称 → 按钮图标路径）
+local instanceIconByName = {}
+local instanceIconsCollected = false
+
+local function CollectInstanceIcons()
+    if instanceIconsCollected then return end
+    if not EJ_GetInstanceByIndex or not EJ_GetNumTiers or not EJ_SelectTier or not EJ_GetCurrentTier then return end
+
+    local currentTier = EJ_GetCurrentTier()
+    local numTiers = EJ_GetNumTiers() or 0
+    if numTiers == 0 then return end
+
+    for tier = 1, numTiers do
+        EJ_SelectTier(tier)
+        for _, isRaid in ipairs({ false, true }) do
+            local index = 1
+            local instanceID, name, _, _, buttonImage = EJ_GetInstanceByIndex(index, isRaid)
+            while instanceID do
+                if name and buttonImage then
+                    instanceIconByName[name] = buttonImage
+                end
+                index = index + 1
+                instanceID, name, _, _, buttonImage = EJ_GetInstanceByIndex(index, isRaid)
+            end
+        end
+    end
+
+    if currentTier then
+        EJ_SelectTier(currentTier)
+    end
+
+    instanceIconsCollected = true
+end
+
+local function GetInstanceIcon(name)
+    if not instanceIconsCollected then
+        CollectInstanceIcons()
+    end
+    local icon = instanceIconByName[name]
+    if icon then
+        return string.format("|T%s:16:16:0:0:96:96:0:64:0:64|t ", icon)
+    end
+    return ""
+end
+
+local function AddSavedInstanceLines(tooltip)
+    if not GetNumSavedInstances then return end
+
+    if RequestRaidInfo then
+        RequestRaidInfo()
+    end
+
+    CollectInstanceIcons()
+
+    local raids, dungeons = {}, {}
+
+    for i = 1, GetNumSavedInstances() do
+        local name, _, reset, difficulty, locked, extended, _, isRaid, maxPlayers, _, numEncounters, encounterProgress =
+            GetSavedInstanceInfo(i)
+        if name and (locked or extended) then
+            local tag = GetDifficultyTag(difficulty)
+            local entry = {
+                name = name,
+                tag = tag,
+                reset = reset,
+                maxPlayers = maxPlayers or 0,
+                numEncounters = numEncounters or 0,
+                encounterProgress = encounterProgress or 0,
+                extended = extended,
+            }
+            if isRaid then
+                table.insert(raids, entry)
+            else
+                table.insert(dungeons, entry)
+            end
+        end
+    end
+
+    table.sort(raids, function(a, b) return a.name < b.name end)
+    table.sort(dungeons, function(a, b) return a.name < b.name end)
+
+    if #raids > 0 then
+        tooltip:AddLine(" ")
+        tooltip:AddLine("已保存的团队副本", 1, 0.82, 0)
+        for _, info in ipairs(raids) do
+            local icon = GetInstanceIcon(info.name)
+            local left = string.format("%s%s %s |cffaaaaaa(%d/%d)", icon, info.tag, info.name, info.encounterProgress,
+                info.numEncounters)
+            local right = FormatResetTime(info.reset)
+            local lr, lg, lb = 1, 1, 1
+            if info.extended then lr, lg, lb = 0.3, 1, 0.3 end
+            tooltip:AddDoubleLine(left, right, lr, lg, lb, 0.8, 0.8, 0.8)
+        end
+    end
+
+    if #dungeons > 0 then
+        tooltip:AddLine(" ")
+        tooltip:AddLine("已保存的地下城", 1, 0.82, 0)
+        for _, info in ipairs(dungeons) do
+            local icon = GetInstanceIcon(info.name)
+            local left = string.format("%s%s %s |cffaaaaaa(%d/%d)", icon, info.tag, info.name, info.encounterProgress,
+                info.numEncounters)
+            local right = FormatResetTime(info.reset)
+            local lr, lg, lb = 1, 1, 1
+            if info.extended then lr, lg, lb = 0.3, 1, 0.3 end
+            tooltip:AddDoubleLine(left, right, lr, lg, lb, 0.8, 0.8, 0.8)
+        end
+    end
+
+    -- 世界首领
+    if GetNumSavedWorldBosses then
+        local bosses = {}
+        for i = 1, GetNumSavedWorldBosses() do
+            local name, _, reset = GetSavedWorldBossInfo(i)
+            if name and reset then
+                table.insert(bosses, { name = name, reset = reset })
+            end
+        end
+        if #bosses > 0 then
+            tooltip:AddLine(" ")
+            tooltip:AddLine("世界首领", 1, 0.82, 0)
+            for _, info in ipairs(bosses) do
+                tooltip:AddDoubleLine(info.name, FormatResetTime(info.reset), 1, 1, 1, 0.8, 0.8, 0.8)
+            end
+        end
+    end
 end
 
 UpdateHearthstoneButtonMacros = function(button)
@@ -1348,6 +1646,10 @@ local function CreateBarButton(parent, index, side)
     btn._iconColorAnim = { currentR = 1, currentG = 1, currentB = 1 }
 
     btn:SetScript("PostClick", function(self, mouseButton)
+        if self._defID == "HOME" and mouseButton == "LeftButton" and self:GetAttribute("type1") == "teleporthome" then
+            return
+        end
+
         local def = GetDef(self._defID)
         if def.click then
             local fn = def.click[mouseButton] or def.click.LeftButton
@@ -1456,6 +1758,8 @@ local function RefreshButton(btn, defID, size)
             UpdateHearthstoneButtonMacros(btn)
             table.insert(hearthstoneButtons, btn)
         end
+    elseif btn._defID == "HOME" then
+        UpdateHomeButtonAttributes(btn)
     end
 
     -- 角落数字（additionalText）
@@ -1526,6 +1830,10 @@ local function CreateMiddlePanel(parent)
     end
 
     local function RefreshTimeTooltip(self)
+        if ShowElvUITimeTooltip(self) then
+            return
+        end
+
         if IsModifierKeyDown and IsModifierKeyDown() then
             ShowAddOnMemoryTooltip(self, "系统信息")
             return
@@ -1543,6 +1851,7 @@ local function CreateMiddlePanel(parent)
             1, 0.3, 1, 0.3)
         GameTooltip:AddDoubleLine("日常重置", FormatResetTime(GetSecondsUntilDailyResetCompat()), 1, 1, 1, 1, 0.82, 0)
         GameTooltip:AddDoubleLine("每周重置", FormatResetTime(GetSecondsUntilWeeklyResetCompat()), 1, 1, 1, 1, 0.82, 0)
+        AddSavedInstanceLines(GameTooltip)
         GameTooltip:AddLine(" ")
         GameTooltip:AddDoubleLine(L_BTN .. " 左键", "日历", 1, 1, 1, 1, 1, 1)
         GameTooltip:AddDoubleLine(R_BTN .. " 右键", "时间管理器", 1, 1, 1, 1, 1, 1)
@@ -1570,7 +1879,9 @@ local function CreateMiddlePanel(parent)
         self:RefreshTooltip()
         if self.tooltipTicker then self.tooltipTicker:Cancel() end
         self.tooltipTicker = C_Timer.NewTicker(1, function()
-            if GameTooltip:IsOwned(self) then
+            local DT = GetElvUITimeTooltipModules()
+            local anchorOwner = self.text or self
+            if (DT and DT.tooltip and DT.tooltip:IsOwned(anchorOwner)) or GameTooltip:IsOwned(self) then
                 self:RefreshTooltip()
             end
         end)
@@ -1591,6 +1902,7 @@ local function CreateMiddlePanel(parent)
         if self.tooltipTicker then
             self.tooltipTicker:Cancel(); self.tooltipTicker = nil
         end
+        HideElvUITimeTooltip()
         GameTooltip:Hide()
     end)
     panel:SetScript("OnClick", function(_, mouseButton)
@@ -1608,9 +1920,21 @@ local function CreateMiddlePanel(parent)
             end
             return
         elseif mouseButton == "LeftButton" then
-            if not InCombatLockdown() then ToggleCalendar() end
+            if not InCombatLockdown() then
+                local gameTimeFrame = rawget(_G, "GameTimeFrame")
+                if gameTimeFrame and gameTimeFrame.Click then
+                    gameTimeFrame:Click()
+                else
+                    ToggleCalendar()
+                end
+            end
         elseif mouseButton == "RightButton" then
-            ToggleTimeManager()
+            local timeManagerFrame = rawget(_G, "TimeManagerFrame")
+            if ToggleFrame and timeManagerFrame then
+                ToggleFrame(timeManagerFrame)
+            elseif ToggleTimeManager then
+                ToggleTimeManager()
+            end
         elseif mouseButton == "MiddleButton" then
             if not InCombatLockdown() then
                 if C_UI and C_UI.Reload then C_UI.Reload() else ReloadUI() end
@@ -1634,6 +1958,8 @@ end
 -- ── 创建游戏条主体 ───────────────────────────────
 function Core:CreateGameBar()
     if bar then return end
+
+    EnsureGameBarEvents()
 
     -- 主框体（不可见容器，用于整体拖动）
     bar = CreateFrame("Frame", addonName .. "GameBar", UIParent)
@@ -1695,6 +2021,10 @@ function Core:CreateGameBar()
         cfg.x or 0,
         cfg.y or -20
     )
+
+    if C_Housing and C_Housing.GetPlayerOwnedHouses then
+        C_Housing.GetPlayerOwnedHouses()
+    end
 end
 
 -- ── 刷新整条布局 ──────────────────────────────────
@@ -1781,6 +2111,8 @@ function Core:UpdateGameBarLayout()
     if leftPanel.accent then leftPanel.accent:SetColorTexture(r, g, b, showBg and 0.85 or 0) end
     if rightPanel.accent then rightPanel.accent:SetColorTexture(r, g, b, showBg and 0.85 or 0) end
     if middlePanel.accent then middlePanel.accent:SetColorTexture(r, g, b, 0) end
+
+    RefreshHomeButtonAttributes()
 
     -- mouseOver
     if cfg.mouseOver then bar:SetAlpha(0) else bar:SetAlpha(1) end

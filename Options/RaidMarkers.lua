@@ -13,7 +13,6 @@ function ns.BuildRaidMarkersOptions()
             raidMarkersEnabled = {
                 type = "toggle",
                 name = "启用团队标记",
-                desc = "显示团队标记条，包含星星、大饼、月亮等目标标记，以及团队就位和倒计时按钮。",
                 order = 1,
                 get = function() return MI().raidMarkersEnabled end,
                 set = function(_, val)
@@ -29,6 +28,17 @@ function ns.BuildRaidMarkersOptions()
                 get = function() return MI().raidMarkersLocked end,
                 set = function(_, val)
                     MI().raidMarkersLocked = val
+                    Core:ApplyMiscSettings()
+                end,
+            },
+            raidMarkersShowWhenSolo = {
+                type = "toggle",
+                name = "非团队时显示",
+                order = 2.5,
+                disabled = function() return not MI().raidMarkersEnabled end,
+                get = function() return MI().raidMarkersShowWhenSolo end,
+                set = function(_, val)
+                    MI().raidMarkersShowWhenSolo = val
                     Core:ApplyMiscSettings()
                 end,
             },
@@ -140,12 +150,6 @@ function ns.BuildRaidMarkersOptions()
                     MI().raidMarkersBorderColor = { r = r, g = g, b = b, a = a }
                     Core:ApplyMiscSettings()
                 end,
-            },
-            raidMarkersTips = {
-                type = "description",
-                name = "左键给当前目标上标记，右键任意标记按钮可清除；“就”发起团队就位，“倒”按上方设定秒数开始倒计时。团队内通常需要队长/助理权限。",
-                order = 11,
-                width = "full",
             },
         },
     }

@@ -80,7 +80,6 @@ function ns.BuildDistanceMonitorOptions()
                 order = 6,
                 width = 1.3,
                 disabled = function() return not DM().enabled end,
-                desc = "仅在范围回退文本中生效，例如填写 - 显示为 5-6，填写  -  显示为 5 - 6。",
                 get = function() return DM().rangeSeparator or " - " end,
                 set = function(_, val)
                     DM().rangeSeparator = (val ~= nil and val ~= "") and val or " - "
@@ -138,12 +137,6 @@ function ns.BuildDistanceMonitorOptions()
                     DM().borderColor = { r = r, g = g, b = b, a = a }
                     Core:ApplyDistanceMonitorSettings()
                 end,
-            },
-            tips = {
-                type = "description",
-                name = "仅在有目标时显示；对玩家/队友等可解析单位优先显示精确距离，普通目标会回退为较细的范围显示，并按距离自动变色。",
-                order = 20,
-                width = "full",
             },
         },
     }

@@ -26,7 +26,6 @@ function ns.BuildDelveQuickLeaveOptions()
             delveQuickLeaveEnabled = {
                 type = "toggle",
                 name = "开启快速离开",
-                desc = "进入地下堡后显示快速离开图标，点击图标即可离开当前地下堡。",
                 order = 1,
                 get = function() return MI().delveQuickLeaveEnabled end,
                 set = function(_, val)
@@ -79,18 +78,11 @@ function ns.BuildDelveQuickLeaveOptions()
                 order = 5,
                 width = 1.6,
                 disabled = function() return not MI().delveQuickLeaveEnabled end,
-                desc = "可填写图标路径或文件ID；留空时使用上方预设图标。",
                 get = function() return MI().delveQuickLeaveCustomIcon or "" end,
                 set = function(_, val)
                     MI().delveQuickLeaveCustomIcon = val or ""
                     Core:ApplyMiscSettings()
                 end,
-            },
-            delveQuickLeaveTips = {
-                type = "description",
-                name = "按钮仅在地下堡内显示；可从预设里选图标，也可输入自定义图标路径/文件ID；解锁后可拖动调整位置。",
-                order = 6,
-                width = "full",
             },
         },
     }

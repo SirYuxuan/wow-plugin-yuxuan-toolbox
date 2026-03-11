@@ -14,7 +14,6 @@ function ns.BuildQuestToolsOptions()
             questToolsEnabled = {
                 type = "toggle",
                 name = "启用任务助手",
-                desc = "开启后显示独立的任务助手框体，包含“任务通报”和“自动交接”两个切换按钮。",
                 order = 1,
                 get = function() return MI().questToolsEnabled end,
                 set = function(_, val)
@@ -110,18 +109,11 @@ function ns.BuildQuestToolsOptions()
                 order = 8,
                 width = 1.6,
                 disabled = function() return not MI().questToolsEnabled end,
-                desc = "支持占位符：{action}=任务已接取/任务已完成、{quest}=任务名、{newline}=换行",
                 get = function() return MI().announceTemplate end,
                 set = function(_, val)
                     MI().announceTemplate = val ~= "" and val or
                         "|cFF33FF99【雨轩工具箱】|r |cFFFFFF00{action}|r：{quest}"
                 end,
-            },
-            tips = {
-                type = "description",
-                name = "任务助手会显示独立框体；“任务通报”和“自动交接”开关请直接点击框体上的按钮切换。",
-                order = 9,
-                width = "full",
             },
         },
     }

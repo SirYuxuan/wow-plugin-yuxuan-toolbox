@@ -93,21 +93,6 @@ local function ResolveExactUnitToken(unit)
         return "player"
     end
 
-    if type(UnitGUID) ~= "function" then
-        return unit
-    end
-
-    local unitGuid = UnitGUID(unit)
-    if not unitGuid then
-        return unit
-    end
-
-    for _, token in ipairs(EXACT_UNIT_TOKENS) do
-        if UnitExists(token) and UnitGUID(token) == unitGuid then
-            return token
-        end
-    end
-
     return unit
 end
 

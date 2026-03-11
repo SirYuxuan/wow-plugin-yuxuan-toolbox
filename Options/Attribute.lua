@@ -30,7 +30,6 @@ function ns.BuildAttributeOptions()
                         type = "toggle",
                         order = 2,
                         name = function() return AT().locked and "解除锁定" or "锁定框架" end,
-                        desc = "锁定后无法拖动",
                         get = function() return AT().locked end,
                         set = function(_, val)
                             AT().locked = val; Core:ApplyAttributeSettings()
@@ -104,7 +103,6 @@ function ns.BuildAttributeOptions()
                         type = "range",
                         name = "背景不透明度",
                         order = 14,
-                        desc = "仅当背景样式为\"半透明背景\"时有效",
                         min = 0,
                         max = 1,
                         step = 0.05,
@@ -470,7 +468,6 @@ function ns.BuildAttributeOptions()
                         type = "input",
                         name = "当前赛季最大装等",
                         order = 7,
-                        desc = "用于装等进度条的最大参考值",
                         get = function() return tostring(AT().maxIlvl) end,
                         set = function(_, val)
                             local num = tonumber(val)

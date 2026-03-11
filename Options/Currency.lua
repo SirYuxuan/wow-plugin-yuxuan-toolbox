@@ -276,7 +276,6 @@ function ns.BuildCurrencyOptions()
                                     end
                                     return "锁定框体"
                                 end,
-                                desc = "锁定后无法拖动",
                                 order = 2,
                                 get = function() return CU().locked end,
                                 set = function(_, val)

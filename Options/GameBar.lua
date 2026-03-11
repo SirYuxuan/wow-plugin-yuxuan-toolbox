@@ -189,7 +189,6 @@ function ns.BuildGameBarOptions()
                 type = "toggle",
                 name = "仅悬停显示",
                 order = 18,
-                desc = "鼠标悬停时淡入显示，离开后淡出隐藏",
                 get = function() return GB().mouseOver end,
                 set = function(_, v)
                     GB().mouseOver = v; Core:ApplyGameBarSettings()

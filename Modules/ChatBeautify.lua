@@ -16,8 +16,96 @@ local function CBcfg()
     if cfg.hideChannelButtons == nil then cfg.hideChannelButtons = true end
     if cfg.hideQuickJoinButton == nil then cfg.hideQuickJoinButton = true end
     if cfg.tabAlpha == nil then cfg.tabAlpha = 0.75 end
+    if cfg.abbreviateChannels == nil then cfg.abbreviateChannels = true end
 
     return cfg
+end
+
+local function GetShortChannelName(channelName)
+    if type(channelName) ~= "string" or channelName == "" then
+        return nil
+    end
+
+    if string.find(channelName, "世界", 1, true) then return "世" end
+    if string.find(channelName, "综合", 1, true) then return "综" end
+    if string.find(channelName, "交易", 1, true) then return "交" end
+    if string.find(channelName, "本地防务", 1, true) then return "防" end
+    if string.find(channelName, "寻求组队", 1, true) then return "组" end
+    if string.find(channelName, "队伍", 1, true) then return "队" end
+    if string.find(channelName, "团队", 1, true) then return "团" end
+    if string.find(channelName, "公会", 1, true) then return "会" end
+    if string.find(channelName, "官员", 1, true) then return "官" end
+    if string.find(channelName, "副本", 1, true) then return "副" end
+    if string.find(channelName, "战场", 1, true) then return "战" end
+
+    return nil
+end
+
+local function AbbreviateChatChannelLinks(message)
+    if type(message) ~= "string" or message == "" then
+        return message
+    end
+
+    local text = message
+
+    local fixedMap = {
+        PARTY = "队",
+        PARTY_LEADER = "队",
+        RAID = "团",
+        RAID_LEADER = "团",
+        RAID_WARNING = "警",
+        INSTANCE_CHAT = "副",
+        INSTANCE_CHAT_LEADER = "副",
+        GUILD = "会",
+        OFFICER = "官",
+        BATTLEGROUND = "战",
+        BATTLEGROUND_LEADER = "战",
+    }
+
+    for channelKey, shortName in pairs(fixedMap) do
+        text = text:gsub("(|Hchannel:" .. channelKey .. "|h)%[[^%]]+%](|h)", "%1[" .. shortName .. "]%2")
+    end
+
+    text = text:gsub("(|Hchannel:channel:%d+|h)%[([^%]]+)%](|h)", function(prefix, channelName, suffix)
+        local shortName = GetShortChannelName(channelName)
+        if shortName then
+            return prefix .. "[" .. shortName .. "]" .. suffix
+        end
+
+        return prefix .. "[" .. channelName .. "]" .. suffix
+    end)
+
+    return text
+end
+
+local function HookChatFrameAddMessage(frame)
+    if not frame or frame.__YuXuanAddMessageHooked then return end
+
+    local origAddMessage = frame.AddMessage
+    frame.AddMessage = function(self, text, ...)
+        if type(text) == "string" and Core and Core.db and Core.db.profile
+            and Core.db.profile.chatBeautify
+            and Core.db.profile.chatBeautify.enabled
+            and Core.db.profile.chatBeautify.abbreviateChannels then
+            text = AbbreviateChatChannelLinks(text)
+        end
+        return origAddMessage(self, text, ...)
+    end
+
+    frame.__YuXuanAddMessageHooked = true
+end
+
+local function EnsureChatAbbreviationHooks()
+    if Core.chatBeautifyAbbreviationHooked then return end
+
+    for i = 1, NUM_CHAT_WINDOWS or 10 do
+        local frame = _G["ChatFrame" .. i]
+        if frame then
+            HookChatFrameAddMessage(frame)
+        end
+    end
+
+    Core.chatBeautifyAbbreviationHooked = true
 end
 
 local function EnsureHiddenParent(self)
@@ -141,6 +229,23 @@ local function StyleChatButtonFrame(frame, cfg)
                 region:SetAlpha(0)
             end
         end
+
+        -- 同时隐藏 ButtonFrame 内的 ResizeButton
+        local resizeButton = buttonFrame.ResizeButton or _G[frame:GetName() .. "ResizeButton"]
+        if resizeButton then
+            resizeButton:Hide()
+            resizeButton:EnableMouse(false)
+        end
+
+        -- 隐藏频道按钮（ChatFrameChannelButton 在左侧）
+        local channelButton = _G.ChatFrameChannelButton
+        if channelButton then
+            if not channelButton.__YuXuanOriginalAlpha then
+                channelButton.__YuXuanOriginalAlpha = channelButton:GetAlpha()
+            end
+            channelButton:SetAlpha(0)
+            channelButton:EnableMouse(false)
+        end
     else
         RestoreFramePoints(buttonFrame, "__YuXuanOriginalPoints")
         buttonFrame:SetWidth(buttonFrame.__YuXuanOriginalWidth or 32)
@@ -163,6 +268,20 @@ local function StyleChatButtonFrame(frame, cfg)
             if region and region.SetAlpha then
                 region:SetAlpha(1)
             end
+        end
+
+        -- 恢复 ResizeButton
+        local resizeButton = buttonFrame.ResizeButton or _G[frame:GetName() .. "ResizeButton"]
+        if resizeButton then
+            resizeButton:Show()
+            resizeButton:EnableMouse(true)
+        end
+
+        -- 恢复频道按钮
+        local channelButton = _G.ChatFrameChannelButton
+        if channelButton then
+            channelButton:SetAlpha(channelButton.__YuXuanOriginalAlpha or 1)
+            channelButton:EnableMouse(true)
         end
     end
 end
@@ -262,8 +381,8 @@ local function ApplyEditBoxStyle(frame, cfg)
 
     if cfg.enabled then
         editBox:ClearAllPoints()
-        editBox:SetPoint("BOTTOMLEFT", frame, "TOPLEFT", -2, 6)
-        editBox:SetPoint("BOTTOMRIGHT", frame, "TOPRIGHT", 2, 6)
+        editBox:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", -2, 0)
+        editBox:SetPoint("TOPRIGHT", frame, "BOTTOMRIGHT", 2, 0)
     else
         RestoreFramePoints(editBox, "__YuXuanOriginalPoints")
     end
@@ -327,10 +446,16 @@ function Core:ApplyChatBeautifySettings()
 
     SetObjectHidden(self, _G.ChatFrameMenuButton, cfg.enabled and cfg.hideMenuButton)
     SetObjectHidden(self, _G.QuickJoinToastButton, cfg.enabled and cfg.hideQuickJoinButton)
+
+    -- 隐藏语音按钮（可能在左侧占位）
+    SetObjectHidden(self, _G.ChatFrameToggleVoiceDeafenButton, cfg.enabled and cfg.hideMenuButton)
+    SetObjectHidden(self, _G.ChatFrameToggleVoiceMuteButton, cfg.enabled and cfg.hideMenuButton)
 end
 
 function Core:EnsureChatBeautifyController()
     if self.chatBeautifyController then return end
+
+    EnsureChatAbbreviationHooks()
 
     local frame = CreateFrame("Frame")
     frame:RegisterEvent("PLAYER_ENTERING_WORLD")

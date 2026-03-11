@@ -99,12 +99,6 @@ function ns.BuildPerformanceMonitorOptions()
                     Core:ApplyPerformanceMonitorSettings()
                 end,
             },
-            tips = {
-                type = "description",
-                name = "显示独立 FPS / MS 文本；已移除边框，仅保留紧凑背景。鼠标移入后会实时刷新插件内存列表。",
-                order = 20,
-                width = "full",
-            },
         },
     }
 end

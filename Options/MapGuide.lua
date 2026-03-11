@@ -226,7 +226,6 @@ function ns.BuildMapGuideOptions()
                     enableMapMarkers = {
                         type = "toggle",
                         name = "启用全地图NPC标记",
-                        desc = "在地图上显示NPC和功能点位置",
                         order = 2,
                         width = 1.2,
                         get = function() return MGcfg().enableMapMarkers end,
@@ -289,7 +288,6 @@ function ns.BuildMapGuideOptions()
                     mapMarkerTooltips = {
                         type = "toggle",
                         name = "鼠标提示",
-                        desc = "鼠标悬停时显示标记的额外提示信息",
                         order = 8,
                         width = 0.7,
                         get = function() return MGcfg().mapMarkerTooltips end,
@@ -301,7 +299,6 @@ function ns.BuildMapGuideOptions()
                     mapMarkerProfessionFilter = {
                         type = "toggle",
                         name = "专业过滤",
-                        desc = "只显示你学习的专业（钓鱼、烹饪、考古除外）",
                         order = 9,
                         width = 0.7,
                         get = function() return MGcfg().mapMarkerProfessionFilter end,
@@ -320,7 +317,6 @@ function ns.BuildMapGuideOptions()
                     enableCoordDisplay = {
                         type = "toggle",
                         name = "启用坐标显示",
-                        desc = "在地图左下角显示当前玩家坐标和鼠标所在坐标",
                         order = 16,
                         width = 1.2,
                         get = function() return MGcfg().enableCoordDisplay end,
@@ -339,7 +335,6 @@ function ns.BuildMapGuideOptions()
                     mapMarkersPortal = {
                         type = "toggle",
                         name = "传送",
-                        desc = "传送门/通道",
                         order = 21,
                         width = 0.5,
                         get = function() return MGcfg().mapMarkersPortal end,
@@ -360,7 +355,6 @@ function ns.BuildMapGuideOptions()
                     mapMarkersOfficial = {
                         type = "toggle",
                         name = "商业",
-                        desc = "拍卖/银行/黑市",
                         order = 23,
                         width = 0.5,
                         get = function() return MGcfg().mapMarkersOfficial end,
@@ -381,7 +375,6 @@ function ns.BuildMapGuideOptions()
                     mapMarkersService = {
                         type = "toggle",
                         name = "服务",
-                        desc = "理发/幻化/商栈/物品升级/订单/地下堡总部",
                         order = 25,
                         width = 0.5,
                         get = function() return MGcfg().mapMarkersService end,
@@ -402,7 +395,6 @@ function ns.BuildMapGuideOptions()
                     mapMarkersCollection = {
                         type = "toggle",
                         name = "藏品",
-                        desc = "坐骑/玩具/宠物/家宅装饰",
                         order = 27,
                         width = 0.5,
                         get = function() return MGcfg().mapMarkersCollection end,
@@ -413,7 +405,6 @@ function ns.BuildMapGuideOptions()
                     mapMarkersVendor = {
                         type = "toggle",
                         name = "通用商人",
-                        desc = "普通商人/公会商人/外观商人/传家宝商人",
                         order = 28,
                         width = 0.6,
                         get = function() return MGcfg().mapMarkersVendor end,
@@ -424,7 +415,6 @@ function ns.BuildMapGuideOptions()
                     mapMarkersUnique = {
                         type = "toggle",
                         name = "特殊商人",
-                        desc = "墨黑药水/焰火/礼服/要塞图纸等",
                         order = 29,
                         width = 0.6,
                         get = function() return MGcfg().mapMarkersUnique end,
@@ -435,7 +425,6 @@ function ns.BuildMapGuideOptions()
                     mapMarkersSpecial = {
                         type = "toggle",
                         name = "特殊功能",
-                        desc = "马戏团专业任务/传送门训练师/克罗米等",
                         order = 30,
                         width = 0.6,
                         get = function() return MGcfg().mapMarkersSpecial end,
@@ -446,7 +435,6 @@ function ns.BuildMapGuideOptions()
                     mapMarkersQuartermaster = {
                         type = "toggle",
                         name = "军需官",
-                        desc = "声望军需官/盟约军需官",
                         order = 31,
                         width = 0.5,
                         get = function() return MGcfg().mapMarkersQuartermaster end,
@@ -457,7 +445,6 @@ function ns.BuildMapGuideOptions()
                     mapMarkersPvp = {
                         type = "toggle",
                         name = "PVP",
-                        desc = "PVP商人/PVP坐骑/木桩",
                         order = 32,
                         width = 0.5,
                         get = function() return MGcfg().mapMarkersPvp end,
@@ -665,7 +652,6 @@ function ns.BuildMapGuideOptions()
                     quickAddPopup = {
                         type = "execute",
                         name = "打开弹窗",
-                        desc = "打开独立的快速添加坐标弹窗",
                         order = 9,
                         width = 0.7,
                         func = function()
@@ -771,7 +757,6 @@ function ns.BuildMapGuideOptions()
                     importExportText = {
                         type = "input",
                         name = "坐标数据",
-                        desc = "粘贴导入数据或复制导出数据",
                         order = 9,
                         width = "full",
                         multiline = 20,

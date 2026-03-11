@@ -100,12 +100,6 @@ function ns.BuildInfoBarOptions()
                     Core:UpdateMiscBarLayout()
                 end,
             },
-            barTips = {
-                type = "description",
-                name = "信息条用于显示专精/天赋与耐久度；解锁后可直接拖动整条移动位置。",
-                order = 8,
-                width = "full",
-            },
         },
     }
 end

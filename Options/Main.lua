@@ -314,6 +314,25 @@ local function EnhanceDialogDrag()
     aceFrame._dragEnhanced = true
 end
 
+function ns.EnsureOptionsRegistered(db)
+    if ns._optionsRegistered then
+        return true
+    end
+
+    if not db then
+        return false
+    end
+
+    local ok, err = pcall(ns.RegisterOptions, db)
+    if ok then
+        ns._optionsRegistered = true
+        return true
+    end
+
+    geterrorhandler()(err)
+    return false
+end
+
 function ns.RegisterOptions(db)
     local options = GetOptions()
     local profiles = AceDBOptions:GetOptionsTable(db)

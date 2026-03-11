@@ -136,7 +136,6 @@ function ns.BuildCastBarOptions()
                         type = "toggle",
                         name = "锁定位置",
                         order = 1,
-                        desc = "解锁后可拖动施法条（/yx lock 或 /yx unlock）",
                         get = function() return CBcfg().locked end,
                         set = function(_, v)
                             CBcfg().locked = v; Core:ApplyCastBarSettings()

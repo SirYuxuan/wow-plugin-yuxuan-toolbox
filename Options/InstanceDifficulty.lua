@@ -206,12 +206,6 @@ function ns.BuildInstanceDifficultyOptions()
                     },
                 },
             },
-            tips = {
-                type = "description",
-                name = "支持地下城/团本难度切换、重置副本、传进/出副本、一键退出、进入副本自动收缩、中央提示与语音播报。命令：/c 或 /yx diff。",
-                order = 40,
-                width = "full",
-            },
         },
     }
 end

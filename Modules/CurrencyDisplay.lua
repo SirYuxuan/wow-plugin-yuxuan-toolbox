@@ -259,7 +259,7 @@ end
 
 local function FormatMoneyShort(copper)
     local gold = math.floor((copper or 0) / 10000)
-    return tostring(gold) .. "g"
+    return tostring(gold) .. "G"
 end
 
 function Core:CreateCurrencyFrame()

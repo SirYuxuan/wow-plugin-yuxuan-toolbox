@@ -122,11 +122,16 @@ function ns.BuildLevelingTipOptions()
                     Core:ApplyMiscSettings()
                 end,
             },
-            tips = {
-                type = "description",
-                name = "升级提示会根据当前经验获取速度，动态显示升级效率、距离下一级以及预计升级时间。",
-                order = 20,
-                width = "full",
+            showAtMaxLevel = {
+                type = "toggle",
+                name = "满级仍然显示",
+                order = 15,
+                disabled = function() return not MI().levelingTipEnabled end,
+                get = function() return MI().levelingTipShowAtMaxLevel end,
+                set = function(_, val)
+                    MI().levelingTipShowAtMaxLevel = val
+                    Core:ApplyMiscSettings()
+                end,
             },
         },
     }

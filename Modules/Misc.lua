@@ -1424,10 +1424,6 @@ function Core:ApplySystemAdjustSettings()
         cfg.npcTimeShowPhaseAlert = false
     end
 
-    if cfg.hideDungeonFinderButton == nil then
-        cfg.hideDungeonFinderButton = false
-    end
-
 
 
     if SetCVar then
@@ -1504,7 +1500,8 @@ function Core:ApplySystemAdjustSettings()
         end
     end
 
-    SetObjectHidden("LFDMicroButton", cfg.hideDungeonFinderButton)
+    SetObjectHidden("LFDMicroButton", true)
+    SetObjectHidden("AddonCompartmentFrame", true)
 end
 
 function Core:ApplyGlobalTooltipHook()
@@ -2351,6 +2348,12 @@ function Core:ShowMiscPopupMenu(anchor, menuType, title, entries, onSelect)
 
 
     ToggleDropDownMenu(1, nil, menu, anchor, 0, 0)
+
+    local dropdown = _G.DropDownList1
+    if dropdown and dropdown:IsShown() and anchor then
+        dropdown:ClearAllPoints()
+        dropdown:SetPoint("BOTTOMLEFT", anchor, "TOPLEFT", 0, 6)
+    end
 end
 
 function Core:GetSpecializationEntries()
@@ -3378,9 +3381,11 @@ function Core:UpdateLevelingTipVisibility()
         cfg.levelingTipHideAtMaxLevel = true
     end
 
+    if cfg.levelingTipShowAtMaxLevel then
+        -- 满级显示模式：忽略 hideAtMaxLevel 设置
+    end
 
-
-    if cfg.levelingTipEnabled and not (cfg.levelingTipHideAtMaxLevel and currentLevel >= maxLevel) then
+    if cfg.levelingTipEnabled and (cfg.levelingTipShowAtMaxLevel or not (cfg.levelingTipHideAtMaxLevel and currentLevel >= maxLevel)) then
         self.levelingTipFrame:Show()
     else
         self.levelingTipFrame:Hide()
@@ -3907,7 +3912,8 @@ end
 function Core:UpdateRaidMarkersVisibility()
     if not self.raidMarkersFrame then return end
 
-    if MIcfg().raidMarkersEnabled and IsInGroup() then
+    local cfg = MIcfg()
+    if cfg.raidMarkersEnabled and (IsInGroup() or cfg.raidMarkersShowWhenSolo) then
         self.raidMarkersFrame:Show()
     else
         self.raidMarkersFrame:Hide()
@@ -4348,7 +4354,7 @@ function Core:CreateMiscBar()
 
 
         if event == "PLAYER_TARGET_CHANGED" or event == "NAME_PLATE_UNIT_ADDED" or event == "NAME_PLATE_UNIT_REMOVED" then
-            Core:UpdateTargetArrowVisibility()
+            C_Timer.After(0, function() Core:UpdateTargetArrowVisibility() end)
 
             return
         end
