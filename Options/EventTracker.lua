@@ -25,12 +25,12 @@ function ns.BuildEventTrackerOptions()
         type = "group",
         name = "事件追踪器",
         order = 10,
+        childGroups = "tab",
         args = {
             basicGroup = {
                 type = "group",
                 name = "基础设置",
                 order = 10,
-                inline = true,
                 args = {
                     enabled = {
                         type = "toggle",
@@ -73,7 +73,6 @@ function ns.BuildEventTrackerOptions()
                 type = "group",
                 name = "样式设置",
                 order = 20,
-                inline = true,
                 args = {
                     fontSize = {
                         type = "range",
@@ -145,32 +144,22 @@ function ns.BuildEventTrackerOptions()
                 type = "group",
                 name = "事件开关",
                 order = 30,
-                childGroups = "tree",
                 args = {
-                    midnight = {
-                        type = "group",
-                        name = "至暗之夜",
-                        order = 1,
-                        args = {
-                            weeklyMN = CreateEventToggle("周常任务 (至暗之夜)", 1, "weeklyMN"),
-                            professionsWeeklyMN = CreateEventToggle("专业周常 (至暗之夜)", 2, "professionsWeeklyMN"),
-                            stormarionAssault = CreateEventToggle("斯托玛兰突袭战", 3, "stormarionAssault"),
-                        },
-                    },
-                    tww = {
-                        type = "group",
-                        name = "地心之战",
-                        order = 2,
-                        args = {
-                            weeklyTWW = CreateEventToggle("周常任务 (地心之战)", 1, "weeklyTWW"),
-                            nightfall = CreateEventToggle("夜幕激斗", 2, "nightfall"),
-                            theaterTroupe = CreateEventToggle("剧团演出", 3, "theaterTroupe"),
-                            ecologicalSuccession = CreateEventToggle("生态重构", 4, "ecologicalSuccession"),
-                            ringingDeeps = CreateEventToggle("回响深渊", 5, "ringingDeeps"),
-                            spreadingTheLight = CreateEventToggle("散布光芒", 6, "spreadingTheLight"),
-                            underworldOperative = CreateEventToggle("暗影行动", 7, "underworldOperative"),
-                        },
-                    },
+                    -- ── 至暗之夜 ──
+                    mnHeader = { type = "header", name = "至暗之夜", order = 10 },
+                    weeklyMN             = CreateEventToggle("周常任务 (至暗之夜)", 11, "weeklyMN"),
+                    professionsWeeklyMN  = CreateEventToggle("专业周常 (至暗之夜)", 12, "professionsWeeklyMN"),
+                    stormarionAssault    = CreateEventToggle("斯托玛兰突袭战",       13, "stormarionAssault"),
+
+                    -- ── 地心之战 ──
+                    twwHeader = { type = "header", name = "地心之战", order = 20 },
+                    weeklyTWW            = CreateEventToggle("周常任务 (地心之战)", 21, "weeklyTWW"),
+                    nightfall            = CreateEventToggle("夜幕激斗",             22, "nightfall"),
+                    theaterTroupe        = CreateEventToggle("剧团演出",             23, "theaterTroupe"),
+                    ecologicalSuccession = CreateEventToggle("生态重构",             24, "ecologicalSuccession"),
+                    ringingDeeps         = CreateEventToggle("回响深渊",             25, "ringingDeeps"),
+                    spreadingTheLight    = CreateEventToggle("散布光芒",             26, "spreadingTheLight"),
+                    underworldOperative  = CreateEventToggle("暗影行动",             27, "underworldOperative"),
                 },
             },
         },

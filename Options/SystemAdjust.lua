@@ -10,12 +10,12 @@ function ns.BuildSystemAdjustOptions()
         type = "group",
         name = "系统调节",
         order = 10,
+        childGroups = "tab",
         args = {
             combatTextGroup = {
                 type = "group",
                 name = "战斗文字",
                 order = 10,
-                inline = true,
                 args = {
                     combatDamageTextScale = {
                         type = "range",
@@ -168,7 +168,6 @@ function ns.BuildSystemAdjustOptions()
                 type = "group",
                 name = "目标标记",
                 order = 30,
-                inline = true,
                 args = {
                     targetArrowEnabled = {
                         type = "toggle",
@@ -267,7 +266,7 @@ function ns.BuildSystemAdjustOptions()
                     targetArrowColor = {
                         type = "color",
                         name = "箭头颜色",
-                        order = 8,
+                        order = 9,
                         hasAlpha = true,
                         disabled = function() return not SA().targetArrowEnabled end,
                         get = function()

@@ -191,11 +191,11 @@ end
 --------------------------------------------------------------------------------
 -- 主选项构建
 -- 分组结构：
---   战斗辅助  (order=10)：快捷频道、施法条、距离监控、团队标记、任务助手
---   界面显示  (order=20)：专精信息条、属性面板、货币展示、升级提示、地下堡离开
---   副本工具  (order=30)：副本难度助手
---   地图探索  (order=40)：地图标记
---   系统调节  (order=50)：系统调节
+--   界面美化  (order=10)：聊天美化、游戏条、系统调节
+--   战斗辅助  (order=20)：快捷频道、施法条、距离监控、团队标记、任务助手
+--   信息显示  (order=30)：专精信息条、属性面板、货币展示、升级提示、性能监控
+--   副本工具  (order=40)：副本难度助手、地下堡快速离开
+--   地图探索  (order=50)：地图标记、事件追踪器
 --   配置档    (order=90)
 --   关于      (order=999)
 --------------------------------------------------------------------------------
@@ -205,11 +205,22 @@ local function GetOptions()
         type = "group",
         childGroups = "tree",
         args = {
+            -- ── 界面美化 ──────────────────────────────
+            beautify = {
+                type = "group",
+                name = "界面美化",
+                order = 10,
+                args = {
+                    chatBeautify = ns.BuildChatBeautifyOptions(),
+                    gameBar      = ns.BuildGameBarOptions(),
+                    systemAdjust = ns.BuildSystemAdjustOptions(),
+                },
+            },
             -- ── 战斗辅助 ──────────────────────────────
             combat = {
                 type = "group",
                 name = "战斗辅助",
-                order = 10,
+                order = 20,
                 args = {
                     quickChat       = ns.BuildQuickChatOptions(),
                     castBar         = ns.BuildCastBarOptions(),
@@ -218,48 +229,37 @@ local function GetOptions()
                     questTools      = ns.BuildQuestToolsOptions(),
                 },
             },
-            -- ── 界面显示 ──────────────────────────────
-            interface = {
+            -- ── 信息显示 ──────────────────────────────
+            info = {
                 type = "group",
-                name = "界面显示",
-                order = 20,
+                name = "信息显示",
+                order = 30,
                 args = {
                     infoBar            = ns.BuildInfoBarOptions(),
                     attribute          = ns.BuildAttributeOptions(),
                     currency           = ns.BuildCurrencyOptions(),
                     levelingTip        = ns.BuildLevelingTipOptions(),
-                    delveQuickLeave    = ns.BuildDelveQuickLeaveOptions(),
-                    gameBar            = ns.BuildGameBarOptions(),
                     performanceMonitor = ns.BuildPerformanceMonitorOptions(),
-                    chatBeautify       = ns.BuildChatBeautifyOptions(),
                 },
             },
             -- ── 副本工具 ──────────────────────────────
             instance = {
                 type = "group",
                 name = "副本工具",
-                order = 30,
+                order = 40,
                 args = {
                     instanceDifficulty = ns.BuildInstanceDifficultyOptions(),
+                    delveQuickLeave    = ns.BuildDelveQuickLeaveOptions(),
                 },
             },
             -- ── 地图探索 ──────────────────────────────
             exploration = {
                 type = "group",
                 name = "地图探索",
-                order = 40,
-                args = {
-                    mapGuide = ns.BuildMapGuideOptions(),
-                    eventTracker = ns.BuildEventTrackerOptions(),
-                },
-            },
-            -- ── 系统调节 ──────────────────────────────
-            system = {
-                type = "group",
-                name = "系统调节",
                 order = 50,
                 args = {
-                    systemAdjust = ns.BuildSystemAdjustOptions(),
+                    mapGuide     = ns.BuildMapGuideOptions(),
+                    eventTracker = ns.BuildEventTrackerOptions(),
                 },
             },
             -- ── 配置档 ────────────────────────────────

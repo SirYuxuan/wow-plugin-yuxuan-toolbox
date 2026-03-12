@@ -81,207 +81,214 @@ function ns.BuildGameBarOptions()
         type  = "group",
         name  = "游戏条",
         order = 25,
+        childGroups = "tab",
         args  = {
-            enabled = {
-                type = "toggle",
-                name = "启用游戏条",
-                order = 1,
-                width = "full",
-                get = function() return GB().enabled end,
-                set = function(_, v)
-                    GB().enabled = v; Core:ApplyGameBarSettings()
-                end,
-            },
-            sp0 = { type = "description", name = " ", order = 2, width = "full" },
-
-            -- ── 外观 ──
-            appearHeader = { type = "header", name = "外观", order = 10 },
-            buttonSize = {
-                type = "range",
-                name = "图标大小",
-                order = 11,
-                min = 16,
-                max = 64,
-                step = 2,
-                get = function() return GB().buttonSize or 28 end,
-                set = function(_, v)
-                    GB().buttonSize = v; Core:ApplyGameBarSettings()
-                end,
-                disabled = function() return not GB().enabled end,
-            },
-            spacing = {
-                type = "range",
-                name = "按钮间距",
-                order = 12,
-                min = 0,
-                max = 20,
-                step = 1,
-                get = function() return GB().spacing or 4 end,
-                set = function(_, v)
-                    GB().spacing = v; Core:ApplyGameBarSettings()
-                end,
-                disabled = function() return not GB().enabled end,
-            },
-            middleWidth = {
-                type = "range",
-                name = "时间区域宽",
-                order = 13,
-                min = 50,
-                max = 160,
-                step = 2,
-                get = function() return GB().middleWidth or 80 end,
-                set = function(_, v)
-                    GB().middleWidth = v; Core:ApplyGameBarSettings()
-                end,
-                disabled = function() return not GB().enabled end,
-            },
-            timeFontSize = {
-                type = "range",
-                name = "时间字体大小",
-                order = 14,
-                min = 10,
-                max = 36,
-                step = 1,
-                get = function() return GB().timeFontSize or 20 end,
-                set = function(_, v)
-                    GB().timeFontSize = v; Core:ApplyGameBarSettings()
-                end,
-                disabled = function() return not GB().enabled end,
-            },
-            animationDuration = {
-                type = "range",
-                name = "悬停动画时长",
-                order = 15,
-                min = 0,
-                max = 1,
-                step = 0.01,
-                get = function() return GB().animationDuration or 0.2 end,
-                set = function(_, v)
-                    GB().animationDuration = v; Core:ApplyGameBarSettings()
-                end,
-                disabled = function() return not GB().enabled end,
-            },
-            showBackground = {
-                type = "toggle",
-                name = "显示背景",
-                order = 16,
-                get = function() return GB().showBackground end,
-                set = function(_, v)
-                    GB().showBackground = v; Core:ApplyGameBarSettings()
-                end,
-                disabled = function() return not GB().enabled end,
-            },
-            backgroundColor = {
-                type = "color",
-                name = "背景颜色",
-                order = 17,
-                hasAlpha = true,
-                get = function()
-                    local c = GB().backgroundColor or { r = 0, g = 0, b = 0, a = 0.45 }
-                    return c.r, c.g, c.b, c.a
-                end,
-                set = function(_, r, g, b, a)
-                    GB().backgroundColor = { r = r, g = g, b = b, a = a }; Core:ApplyGameBarSettings()
-                end,
-                disabled = function() return not GB().enabled or not GB().showBackground end,
-            },
-            mouseOver = {
-                type = "toggle",
-                name = "仅悬停显示",
-                order = 18,
-                get = function() return GB().mouseOver end,
-                set = function(_, v)
-                    GB().mouseOver = v; Core:ApplyGameBarSettings()
-                end,
-                disabled = function() return not GB().enabled end,
-            },
-            locked = {
-                type = "toggle",
-                name = function() return ns.OptionsShared.GetLockLayoutToggleName(GB().locked) end,
-                order = 19,
-                get = function() return GB().locked end,
-                set = function(_, v)
-                    GB().locked = v
-                    Core:ApplyGameBarSettings()
-                end,
-                disabled = function() return not GB().enabled end,
-            },
-
-            buttonConfig = {
+            -- ── 基本配置 ──
+            basicConfig = {
                 type = "group",
-                name = "按钮配置",
-                order = 40,
-                childGroups = "tab",
+                name = "基本配置",
+                order = 1,
+                args = {
+                    enabled = {
+                        type = "toggle",
+                        name = "启用游戏条",
+                        order = 1,
+                        width = "full",
+                        get = function() return GB().enabled end,
+                        set = function(_, v)
+                            GB().enabled = v; Core:ApplyGameBarSettings()
+                        end,
+                    },
+                    sp0 = { type = "description", name = " ", order = 2, width = "full" },
+
+                    appearHeader = { type = "header", name = "外观", order = 10 },
+                    buttonSize = {
+                        type = "range",
+                        name = "图标大小",
+                        order = 11,
+                        min = 16,
+                        max = 64,
+                        step = 2,
+                        get = function() return GB().buttonSize or 28 end,
+                        set = function(_, v)
+                            GB().buttonSize = v; Core:ApplyGameBarSettings()
+                        end,
+                        disabled = function() return not GB().enabled end,
+                    },
+                    spacing = {
+                        type = "range",
+                        name = "按钮间距",
+                        order = 12,
+                        min = 0,
+                        max = 20,
+                        step = 1,
+                        get = function() return GB().spacing or 4 end,
+                        set = function(_, v)
+                            GB().spacing = v; Core:ApplyGameBarSettings()
+                        end,
+                        disabled = function() return not GB().enabled end,
+                    },
+                    middleWidth = {
+                        type = "range",
+                        name = "时间区域宽",
+                        order = 13,
+                        min = 50,
+                        max = 160,
+                        step = 2,
+                        get = function() return GB().middleWidth or 80 end,
+                        set = function(_, v)
+                            GB().middleWidth = v; Core:ApplyGameBarSettings()
+                        end,
+                        disabled = function() return not GB().enabled end,
+                    },
+                    timeFontSize = {
+                        type = "range",
+                        name = "时间字体大小",
+                        order = 14,
+                        min = 10,
+                        max = 36,
+                        step = 1,
+                        get = function() return GB().timeFontSize or 20 end,
+                        set = function(_, v)
+                            GB().timeFontSize = v; Core:ApplyGameBarSettings()
+                        end,
+                        disabled = function() return not GB().enabled end,
+                    },
+                    animationDuration = {
+                        type = "range",
+                        name = "悬停动画时长",
+                        order = 15,
+                        min = 0,
+                        max = 1,
+                        step = 0.01,
+                        get = function() return GB().animationDuration or 0.2 end,
+                        set = function(_, v)
+                            GB().animationDuration = v; Core:ApplyGameBarSettings()
+                        end,
+                        disabled = function() return not GB().enabled end,
+                    },
+                    showBackground = {
+                        type = "toggle",
+                        name = "显示背景",
+                        order = 16,
+                        get = function() return GB().showBackground end,
+                        set = function(_, v)
+                            GB().showBackground = v; Core:ApplyGameBarSettings()
+                        end,
+                        disabled = function() return not GB().enabled end,
+                    },
+                    backgroundColor = {
+                        type = "color",
+                        name = "背景颜色",
+                        order = 17,
+                        hasAlpha = true,
+                        get = function()
+                            local c = GB().backgroundColor or { r = 0, g = 0, b = 0, a = 0.45 }
+                            return c.r, c.g, c.b, c.a
+                        end,
+                        set = function(_, r, g, b, a)
+                            GB().backgroundColor = { r = r, g = g, b = b, a = a }; Core:ApplyGameBarSettings()
+                        end,
+                        disabled = function() return not GB().enabled or not GB().showBackground end,
+                    },
+                    mouseOver = {
+                        type = "toggle",
+                        name = "仅悬停显示",
+                        order = 18,
+                        get = function() return GB().mouseOver end,
+                        set = function(_, v)
+                            GB().mouseOver = v; Core:ApplyGameBarSettings()
+                        end,
+                        disabled = function() return not GB().enabled end,
+                    },
+                    locked = {
+                        type = "toggle",
+                        name = function() return ns.OptionsShared.GetLockLayoutToggleName(GB().locked) end,
+                        order = 19,
+                        get = function() return GB().locked end,
+                        set = function(_, v)
+                            GB().locked = v
+                            Core:ApplyGameBarSettings()
+                        end,
+                        disabled = function() return not GB().enabled end,
+                    },
+                },
+            },
+
+            -- ── 左侧按钮 ──
+            leftSlots = {
+                type = "group",
+                name = "左侧按钮",
+                order = 2,
+                disabled = function() return not GB().enabled end,
+                args = BuildSideSlots("left"),
+            },
+
+            -- ── 右侧按钮 ──
+            rightSlots = {
+                type = "group",
+                name = "右侧按钮",
+                order = 3,
+                disabled = function() return not GB().enabled end,
+                args = BuildSideSlots("right"),
+            },
+
+            -- ── 炉石 ──
+            hearthstone = {
+                type = "group",
+                name = "炉石",
+                order = 4,
                 disabled = function() return not GB().enabled end,
                 args = {
-                    leftSlots = {
-                        type = "group",
-                        name = "左侧按钮",
+                    showBindLocation = {
+                        type = "toggle",
+                        name = "提示中显示绑定地点",
                         order = 1,
-                        args = BuildSideSlots("left"),
+                        get = function() return GB().hearthstone and GB().hearthstone.showBindLocation ~= false end,
+                        set = function(_, v)
+                            GB().hearthstone = GB().hearthstone or {}
+                            GB().hearthstone.showBindLocation = v
+                            Core:ApplyGameBarSettings()
+                        end,
                     },
-                    rightSlots = {
-                        type = "group",
-                        name = "右侧按钮",
+                    left = {
+                        type = "select",
+                        name = "左键",
                         order = 2,
-                        args = BuildSideSlots("right"),
+                        width = "full",
+                        values = GetHearthstoneChoices,
+                        get = function() return (GB().hearthstone and GB().hearthstone.left) or "AUTO" end,
+                        set = function(_, v)
+                            GB().hearthstone = GB().hearthstone or {}
+                            GB().hearthstone.left = v
+                            Core:ApplyGameBarSettings()
+                        end,
                     },
-                    hearthstone = {
-                        type = "group",
-                        name = "炉石",
+                    middle = {
+                        type = "select",
+                        name = "中键",
                         order = 3,
-                        args = {
-                            showBindLocation = {
-                                type = "toggle",
-                                name = "提示中显示绑定地点",
-                                order = 1,
-                                get = function() return GB().hearthstone and GB().hearthstone.showBindLocation ~= false end,
-                                set = function(_, v)
-                                    GB().hearthstone = GB().hearthstone or {}
-                                    GB().hearthstone.showBindLocation = v
-                                    Core:ApplyGameBarSettings()
-                                end,
-                            },
-                            left = {
-                                type = "select",
-                                name = "左键",
-                                order = 2,
-                                width = "full",
-                                values = GetHearthstoneChoices,
-                                get = function() return (GB().hearthstone and GB().hearthstone.left) or "AUTO" end,
-                                set = function(_, v)
-                                    GB().hearthstone = GB().hearthstone or {}
-                                    GB().hearthstone.left = v
-                                    Core:ApplyGameBarSettings()
-                                end,
-                            },
-                            middle = {
-                                type = "select",
-                                name = "中键",
-                                order = 3,
-                                width = "full",
-                                values = GetHearthstoneChoices,
-                                get = function() return (GB().hearthstone and GB().hearthstone.middle) or "RANDOM" end,
-                                set = function(_, v)
-                                    GB().hearthstone = GB().hearthstone or {}
-                                    GB().hearthstone.middle = v
-                                    Core:ApplyGameBarSettings()
-                                end,
-                            },
-                            right = {
-                                type = "select",
-                                name = "右键",
-                                order = 4,
-                                width = "full",
-                                values = GetHearthstoneChoices,
-                                get = function() return (GB().hearthstone and GB().hearthstone.right) or "AUTO" end,
-                                set = function(_, v)
-                                    GB().hearthstone = GB().hearthstone or {}
-                                    GB().hearthstone.right = v
-                                    Core:ApplyGameBarSettings()
-                                end,
-                            },
-                        },
+                        width = "full",
+                        values = GetHearthstoneChoices,
+                        get = function() return (GB().hearthstone and GB().hearthstone.middle) or "RANDOM" end,
+                        set = function(_, v)
+                            GB().hearthstone = GB().hearthstone or {}
+                            GB().hearthstone.middle = v
+                            Core:ApplyGameBarSettings()
+                        end,
+                    },
+                    right = {
+                        type = "select",
+                        name = "右键",
+                        order = 4,
+                        width = "full",
+                        values = GetHearthstoneChoices,
+                        get = function() return (GB().hearthstone and GB().hearthstone.right) or "AUTO" end,
+                        set = function(_, v)
+                            GB().hearthstone = GB().hearthstone or {}
+                            GB().hearthstone.right = v
+                            Core:ApplyGameBarSettings()
+                        end,
                     },
                 },
             },
